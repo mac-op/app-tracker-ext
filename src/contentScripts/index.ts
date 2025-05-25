@@ -3,6 +3,7 @@ import { onMessage } from 'webext-bridge/content-script'
 import { createApp } from 'vue'
 import App from './views/App.vue'
 import { setupApp } from '~/logic/common-setup'
+import browser from "webextension-polyfill";
 
 // Firefox `browser.tabs.executeScript()` requires scripts return a primitive value
 (() => {
