@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import {ref} from 'vue'
 import {storedSettings} from "~/logic";
-// import {storedSettings} from '~/logic/storage'
+
 const showSettings = ref(false)
 const toggleSettings = () => showSettings.value = !showSettings.value
-
 </script>
 
 <template>
@@ -28,7 +27,7 @@ const toggleSettings = () => showSettings.value = !showSettings.value
         <button class="btn">
           Parse this posting
         </button>
-        <span> {{ storedSettings.openaiOptions.auth }}</span>
+        <span> {{ storedSettings.openaiOptions }} </span>
       </div>
     </template>
 
@@ -45,7 +44,6 @@ const toggleSettings = () => showSettings.value = !showSettings.value
       </div>
 
       <div class="m-2 space-y-5">
-
         <div>
           <label class="block font-medium mb-1 px-1">LLM Provider</label>
           <Dropdown
@@ -61,96 +59,68 @@ const toggleSettings = () => showSettings.value = !showSettings.value
               class="w-full">
           </Dropdown>
         </div>
-        <div>
-          <label class="font-medium mb-1 px-1">Setting 1</label>
-          <input type="text" class="box"/>
-        </div>
+        <ResizeableInput
+            v-model="storedSettings.openaiOptions.auth"
+            label="LLM Prompt"
+        />
 
         <Accordion title="OpenAI" :defaultOpen="false">
-          <div>
-            <label class="font-medium mb-1 px-1">Auth</label>
-            <input
-                type="text" :value="storedSettings.openaiOptions.auth" class="box"
-                @change="(event: Event) => storedSettings.openaiOptions.auth = (event.target as HTMLInputElement).value"
-            />
-          </div>
-          <div>
-            <label class="font-medium mb-1 px-1">Model</label>
-            <input
-                type="text" :value="storedSettings.openaiOptions.model" class="box"
-                @change="(event: Event) => storedSettings.openaiOptions.model = (event.target as HTMLInputElement).value"
-            />
-          </div>
+          <InputBox
+              v-model="storedSettings.openaiOptions.auth"
+              label="Auth"
+          />
+          <InputBox
+              v-model="storedSettings.openaiOptions.model"
+              label="Model"
+          />
         </Accordion>
 
         <Accordion title="Anthropic" :defaultOpen="false">
-          <div>
-            <label class="font-medium mb-1 px-1">Auth</label>
-            <input
-                type="text" :value="storedSettings.anthropicOptions.auth" class="box"
-                @change="(event: Event) => storedSettings.anthropicOptions.auth = (event.target as HTMLInputElement).value"
-            />
-          </div>
-          <div>
-            <label class="font-medium mb-1 px-1">Model</label>
-            <input
-                type="text" :value="storedSettings.anthropicOptions.model" class="box"
-                @change="(event: Event) => storedSettings.anthropicOptions.model = (event.target as HTMLInputElement).value"
-            />
-          </div>
+          <InputBox
+              v-model="storedSettings.anthropicOptions.auth"
+              label="Auth"
+          />
+          <InputBox
+              v-model="storedSettings.anthropicOptions.model"
+              label="Model"
+          />
         </Accordion>
         <Accordion title="Google" :defaultOpen="false">
-          <div>
-            <label class="font-medium mb-1 px-1">Auth</label>
-            <input
-                type="text" :value="storedSettings.googleOptions.auth" class="box"
-                @change="(event: Event) => storedSettings.googleOptions.auth = (event.target as HTMLInputElement).value"
-            />
-          </div>
-          <div>
-            <label class="font-medium mb-1 px-1">Model</label>
-            <input
-                type="text" :value="storedSettings.googleOptions.model" class="box"
-                @change="(event: Event) => storedSettings.googleOptions.model = (event.target as HTMLInputElement).value"
-            />
-          </div>
+          <InputBox
+              v-model="storedSettings.googleOptions.auth"
+              label="Auth"
+          />
+          <InputBox
+              v-model="storedSettings.googleOptions.model"
+              label="Model"
+          />
         </Accordion>
 
         <Accordion title="Ollama" :defaultOpen="false">
-          <div>
-            <label class="font-medium mb-1 px-1">Endpoint</label>
-            <input
-                type="text" :value="storedSettings.ollamaOptions.endpoint" class="box"
-                @change="(event: Event) => storedSettings.ollamaOptions.endpoint = (event.target as HTMLInputElement).value"
-            />
-          </div>
-
-          <div>
-            <label class="font-medium mb-1 px-1">Auth</label>
-            <input
-                type="text" :value="storedSettings.ollamaOptions.auth" class="box"
-                @change="(event: Event) => storedSettings.ollamaOptions.auth = (event.target as HTMLInputElement).value"
-            />
-          </div>
-          <div>
-            <label class="font-medium mb-1 px-1">Model</label>
-            <input
-                type="text" :value="storedSettings.ollamaOptions.model" class="box"
-                @change="(event: Event) => storedSettings.ollamaOptions.model = (event.target as HTMLInputElement).value"
-            />
-          </div>
+          <InputBox
+              v-model="storedSettings.ollamaOptions.endpoint"
+              label="Host"
+          />
+          <InputBox
+              v-model="storedSettings.ollamaOptions.auth"
+              label="Auth"
+          />
+          <InputBox
+              v-model="storedSettings.ollamaOptions.model"
+              label="Model"
+          />
         </Accordion>
 
-        <div>
-          <label class="block text-sm font-medium mb-1">Enable Feature</label>
-          <div class="flex items-center">
-            <input type="checkbox" class="mr-2"/>
-            <span>This is a sample feature</span>
-          </div>
-        </div>
+        <!--        <div>-->
+        <!--          <label class="block text-sm font-medium mb-1">Enable Feature</label>-->
+        <!--          <div class="flex items-center">-->
+        <!--            <input type="checkbox" class="mr-2"/>-->
+        <!--            <span>This is a sample feature</span>-->
+        <!--          </div>-->
+        <!--        </div>-->
       </div>
 
-      <div class="mt-8 flex justify-end">
+      <div class="mt-10 flex justify-end">
         <button class="btn" @click="toggleSettings">
           Save and Close
         </button>

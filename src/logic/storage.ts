@@ -42,7 +42,7 @@ const settingsDefault = ref<UserSettings>({
     },
     ollamaOptions: {
         endpoint: 'http://localhost:11434/api/generate',
-        model: 'llama2',
+        model: 'gemma3:12b',
         auth: '',
     },
     googleOptions: {

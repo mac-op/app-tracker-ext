@@ -7,12 +7,12 @@ const props = defineProps<{
 }>()
 
 const isOpen = ref<boolean>(props.defaultOpen || false)
-
+provide('isOpen', isOpen)
 const toggleAccordion = () => isOpen.value = !isOpen.value
 </script>
 
 <template>
-  <div class="w-full py-2">
+  <div class="w-full">
     <button
         type="button"
         @click="toggleAccordion"
@@ -26,7 +26,7 @@ const toggleAccordion = () => isOpen.value = !isOpen.value
     </button>
     <div
         v-show="isOpen"
-        class="w-full mt-5 bg-white"
+        class="w-full mt-1 bg-white"
     >
       <slot></slot>
     </div>
