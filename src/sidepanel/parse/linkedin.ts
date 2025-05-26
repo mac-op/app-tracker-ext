@@ -1,4 +1,4 @@
-import {ParseResult, PostingParser, PostingDate, extractDetails} from "./base";
+import {ParseResult, PostingParser, extractDetails} from "./base";
 import browser from "webextension-polyfill";
 
 function getDetails(): ParseResult {
@@ -15,35 +15,28 @@ function getDetails(): ParseResult {
         return new Error('Element not found.');
     }
     const details = detailElem.innerText;
-    const [location, time, _] = details.split('·');
+    const [location, when, _] = details.split('·');
 
-    function parseTime(time: string): PostingDate {
-        const regex = /(\s*Reposted)?\s*(\d+)\s*(hour|day|week|month)s?\s*ago/i;
-        const match = time.match(regex)!;
+    function parseTime(t: string): Date {
+        const regex = /(?:\s*Reposted)?\s*(\d+)\s*(hour|day|week|month)s?\s*ago/i;
+        const match = t.match(regex)!;
         const value = parseInt(match[1]);
         const unit = match[2].toLowerCase();
-        const ret = {
-            from: new Date(),
-            hours: 0,
-            days: 0,
-            weeks: 0,
-            months: 0,
-        }
+        const now = new Date();
+        console.error(value, unit, now);
         switch (unit) {
             case 'hour':
-                ret.hours = value;
-                break;
+                const a = new Date(now.getTime() - value * 60 * 60 * 1000);
+                return a;
             case 'day':
-                ret.days = value;
-                break;
+                const b = new Date(now.getTime() - value * 24 * 60 * 60 * 1000);
+                return b;
             case 'week':
-                ret.weeks = value;
-                break;
+                return new Date(now.getTime() - value * 7 * 24 * 60 * 60 * 1000);
             case 'month':
-                ret.months = value;
-                break;
+                return new Date(now.getTime() - value * 30 * 24 * 60 * 60 * 1000);
         }
-        return ret;
+        return now;
     }
 
     function formatDesc(element: HTMLElement): string {
@@ -92,38 +85,37 @@ function getDetails(): ParseResult {
         return content;
     }
 
+    console.log(parseTime(when));
+
     const linkedinID = (() => {
         const url = window.location.href;
         const regex = /\/jobs\/view\/(\d+)\//;
         const match = url.match(regex);
         if (match) {
-            return match[0];
+            return match[1];
         } else {
             const viewMatch = url.match(/currentJobId=(\d+)/);
             if (viewMatch)
-                return viewMatch[0];
+                return viewMatch[1];
         }
         return '?';
     })();
 
     return {
-        title: jobTitleElem.textContent!,
-        company: companyNameElem.textContent!,
+        title: jobTitleElem.textContent!.trim(),
+        company: companyNameElem.textContent!.trim(),
         description: formatDesc(descElem).trim(),
-        location: location,
-        datePosted: parseTime(time),
+        location: location.trim(),
+        datePosted: parseTime(when).toDateString(),
         url: `${linkedinID ? 'https://www.linkedin.com/jobs/view/' + linkedinID : window.location.href}`,
         internalId: linkedinID,
         source: 'LinkedIn',
-        reposted: time.startsWith('Reposted'),
+        reposted: when.startsWith('Reposted'),
     };
 }
 
 export class LinkedInParser implements PostingParser {
-    async parse(): Promise<ParseResult> {
-        const [tab] = await browser.tabs.query({active: true, currentWindow: true});
-        if (!tab)
-            return new Error('No active tab found.');
+    async parse(tab: browser.Tabs.Tab): Promise<ParseResult> {
         if (!tab.url || !tab.url.startsWith('https://www.linkedin.com/'))
             return new Error('Not a LinkedIn job posting page.');
 

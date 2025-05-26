@@ -1,28 +1,24 @@
 import browser from "webextension-polyfill";
 
-export type PostingDate = Date | {
-    from: Date,
-    hours?: number,
-    days?: number,
-    weeks?: number,
-    months?: number,
-};
-
 export type JobPosting = {
     title: string;
     company: string;
     description: string;
     location: string;
-    datePosted: PostingDate | null;
+    datePosted: Date | string | null;
     url: string;
     internalId: string | null;
     source: string;
-    reposted?: boolean;
+    reposted: boolean | null;
 }
 
 export type ParseResult = JobPosting | Error | string;
 
 export async function extractDetails(tab: browser.Tabs.Tab, func: () => ParseResult): Promise<ParseResult> {
+    if (browser.scripting === undefined) {
+        return new Error('Scripting API is not available in this browser.');
+    }
+
     const results = await browser.scripting.executeScript({
         target: {tabId: tab.id!},
         func: func,
@@ -37,5 +33,5 @@ export async function extractDetails(tab: browser.Tabs.Tab, func: () => ParseRes
 
 
 export interface PostingParser {
-    parse(): Promise<ParseResult>;
+    parse(tab: browser.Tabs.Tab): Promise<ParseResult>;
 }

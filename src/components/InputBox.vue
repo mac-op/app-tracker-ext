@@ -2,7 +2,7 @@
 
 defineProps<{
   label: string;
-  modelValue: string;
+  modelValue?: string;
 }>();
 
 const emit = defineEmits<{

@@ -37,6 +37,7 @@ export async function getManifest() {
             'storage',
             'activeTab',
             'sidePanel',
+            'scripting',
         ],
         host_permissions: ['*://*/*'],
         content_scripts: [

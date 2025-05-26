@@ -1,9 +1,55 @@
 <script setup lang="ts">
+
 import {ref} from 'vue'
 import {storedSettings} from "~/logic";
+import InputBox from '~/components/InputBox.vue'
+import parsePosting from '~/sidepanel/parse/parse'
 
 const showSettings = ref(false)
 const toggleSettings = () => showSettings.value = !showSettings.value
+
+const job = ref({
+  title: '',
+  company: '',
+  description: '',
+  location: '',
+  datePosted: '',
+  url: '',
+  internalId: '',
+  source: '',
+  reposted: true
+})
+
+function updateJob() {
+  parsePosting()
+      .then((result) => {
+        if (result instanceof Error) {
+          console.error('Error parsing posting:', result)
+          return
+        }
+        if (typeof result === 'string') {
+          console.error('Unexpected result type:', result)
+          return
+        }
+        console.log('Parsed posting:', result)
+        job.value = {
+          title: result.title || '',
+          company: result.company || '',
+          description: result.description || '',
+          location: result.location || '',
+          datePosted: result.datePosted instanceof Date
+              ? result.datePosted.toDateString()
+              : result.datePosted || '',
+          url: result.url || '',
+          internalId: result.internalId || '',
+          source: result.source || '',
+          reposted: result.reposted || false
+        }
+      })
+      .catch((error) => {
+        console.error('Error parsing posting:', error)
+      })
+}
 </script>
 
 <template>
@@ -23,11 +69,30 @@ const toggleSettings = () => showSettings.value = !showSettings.value
         </button>
       </div>
 
-      <div class="mt-2">
-        <button class="btn">
+      <div class="pt-5 px-2">
+        <button class="btn" @click="updateJob()">
           Parse this posting
         </button>
-        <span> {{ storedSettings.openaiOptions }} </span>
+      </div>
+
+      <div class="pt-5 pr-3">
+        <InputBox label="Title" v-model="job.title"/>
+        <InputBox label="Company" v-model="job.company"/>
+        <ResizeableInput label="Description" v-model="job.description"/>
+        <InputBox label="Location" v-model="job.location"/>
+        <InputBox label="Date Posted" v-model="job.datePosted"/>
+        <InputBox label="URL" v-model="job.url"/>
+        <InputBox label="Internal ID" v-model="job.internalId"/>
+        <InputBox label="Source" v-model="job.source"/>
+
+        <div class="pt-4">
+          <!--          <label class="block text-sm font-medium mb-1">Reposted</label>-->
+          <div class="flex items-center">
+            <input type="checkbox" class="mr-2 font-medium"/>
+            <span>Reposted?</span>
+          </div>
+        </div>
+
       </div>
     </template>
 
@@ -59,7 +124,7 @@ const toggleSettings = () => showSettings.value = !showSettings.value
               class="w-full">
           </Dropdown>
         </div>
-        <ResizeableInput
+        <InputBox
             v-model="storedSettings.openaiOptions.auth"
             label="LLM Prompt"
         />
@@ -111,13 +176,6 @@ const toggleSettings = () => showSettings.value = !showSettings.value
           />
         </Accordion>
 
-        <!--        <div>-->
-        <!--          <label class="block text-sm font-medium mb-1">Enable Feature</label>-->
-        <!--          <div class="flex items-center">-->
-        <!--            <input type="checkbox" class="mr-2"/>-->
-        <!--            <span>This is a sample feature</span>-->
-        <!--          </div>-->
-        <!--        </div>-->
       </div>
 
       <div class="mt-10 flex justify-end">

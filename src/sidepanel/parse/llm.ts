@@ -1,5 +1,6 @@
 import {extractDetails, JobPosting, ParseResult, PostingParser} from './base';
 import axios from "axios";
+import browser from "webextension-polyfill";
 
 const PROMPT = "You are a job posting parser. " +
     "You will be given a text of a page that contains a job posting details. " +
@@ -21,13 +22,13 @@ const PROMPT = "You are a job posting parser. " +
     "(especially for elements like bullet lists and paragraphs and headings)\n" +
     "The description field is the most important field in the object. Do not omit important information. Add as much relevant text as possible.\n" +
     "Return the result as a JSON object (without backticks for formatting) without any additional text or explanation or quotes or escape characters (no ``` ``` formatting)\n" +
-    "This is the url of the page: {url}\n" +
+    "This is the url of the page: {url} (for your reference only, no need to access the page)\n" +
     "This is the text of the page: {text}\n"
 
 /**
  * Generic type for request body formatters
  */
-interface LLMOptions {
+export interface LLMOptions {
     endpoint?: string,
     model?: string,
     auth?: string,
@@ -84,23 +85,29 @@ const LLM_CONFIG: Record<LLMProvider, RequestHandle> = {
     google: async (prompt: string, options) => {
         return await axios.post(
             `${options.endpoint || 'https://generativelanguage.googleapis.com/v1beta/models'}/` +
-            `${options.model || 'gemini-2.5-flash'}:generateContent?key=${options.auth}`,
+            `${options.model?.trim() || 'gemini-2.5-flash'}:generateContent?key=${options.auth?.trim()}`,
             {contents: [{parts: [{"text": prompt}]}]}
-        ).then(response => JSON.parse(response.data.candidates[0].content.parts[0].text) as JobPosting)
-            .catch(error => new Error(`Google API request failed: ${error}`));
+        ).then(
+            response => {
+                const content = response.data.candidates[0].content.parts[0].text;
+                return JSON.parse(content.replace(/```(json)?/g, '')) as JobPosting
+            }
+        ).catch(error => new Error(`Google API request failed: ${error}`));
     },
     ollama: async (prompt: string, options) => {
+        const payload = {
+            model: options.model || 'gemma3:12b',
+            prompt: prompt,
+            stream: false,
+        };
+        console.log(payload);
         return axios.post(
             options.endpoint || 'http://localhost:11434/api/generate',
-            {
-                model: options.model || 'deepseek-r1',
-                prompt: prompt,
-                stream: false,
-            },
+            payload,
             {headers: {'Authorization': `Bearer ${options.auth}`}}
         ).then(response => {
             if (response.status !== 200)
-                return new Error(`Ollama API request failed: ${response.statusText}`);
+                return new Error(`Ollama API request failed: ${response.statusText} ${response.data}`);
             const obj = response.data.response as string;
             console.log(obj);
             return JSON.parse(obj.replace(/```(json)?/g, '')) as JobPosting;
@@ -138,10 +145,7 @@ export class LLMParser implements PostingParser {
             .catch(e => new Error(`LLM API request failed: ${e}`));
     }
 
-    async parse(): Promise<ParseResult> {
-        const [tab] = await browser.tabs.query({active: true, currentWindow: true});
-        if (!tab)
-            return new Error('No active tab found.');
+    async parse(tab: browser.Tabs.Tab): Promise<ParseResult> {
         if (!tab.url)
             return new Error('No URL found for the active tab.');
 
