@@ -1,20 +1,37 @@
 html,
 body,
 #app {
-  margin: 0;
-  padding: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
 }
 
 .btn {
-  @apply px-4 py-1 rounded inline-block
+    @apply px-6 py-3 rounded-md inline-block
     bg-teal-600 text-white cursor-pointer
     hover:bg-teal-700
     disabled:cursor-default disabled:bg-gray-600 disabled:opacity-50;
+
 }
 
 .icon-btn {
-  @apply inline-block cursor-pointer select-none
+    @apply inline-block cursor-pointer select-none
     opacity-75 transition duration-200 ease-in-out
     hover:opacity-100 hover:text-teal-600;
-  font-size: 0.9em;
+    font-size: 0.9em;
+}
+
+.box {
+    @apply w-full px-2 py-2.5 bg-white border border-gray-300 rounded-md shadow-sm
+    hover:border-teal-500 focus:border-teal-500
+    focus:ring-2 focus:ring-teal-500 focus:outline-none;
+    position: relative;
+    padding-right: 2.5rem;
+    appearance: none;
+}
+
+.accordion {
+    @apply w-full py-1 bg-white
+    shadow-sm text-left text-gray-700 hover:border-teal-500
+    flex items-center justify-between;
 }
