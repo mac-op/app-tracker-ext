@@ -58,7 +58,7 @@ onUnmounted(() => {
     <!-- File info -->
     <div class="p-3 flex items-center space-x-3">
       <div
-          class="h-20 min-w-16 bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer rounded-lg"
+          class="h-15 min-w-16 bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer rounded-lg"
           @click="previewFile"
       >
         <!-- Image preview for image files -->

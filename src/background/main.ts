@@ -18,6 +18,5 @@ browser.runtime.onMessage.addListener(async (message) => {
         const contexts = await browser.runtime.getContexts({contextTypes: ["SIDE_PANEL"]});
         return contexts.length > 0 ? {isOpen: true} : {isOpen: false};
     }
-    // Handle other messages
     return null;
 });

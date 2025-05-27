@@ -15,10 +15,6 @@ export async function getManifest() {
             default_icon: './assets/icon-512.png',
             default_title: "Click me",
         },
-        options_ui: {
-            page: './dist/options/index.html',
-            open_in_tab: false,
-        },
         background: isFirefox
             ? {
                 scripts: ['dist/background/index.mjs'],
@@ -46,12 +42,6 @@ export async function getManifest() {
                 js: ['dist/contentScripts/index.global.js'],
             }
         ],
-        // web_accessible_resources: [
-        //     {
-        //         resources: ['dist/contentScripts/style.css'],
-        //         matches: ['<all_urls>'],
-        //     },
-        // ],
         content_security_policy: {
             extension_pages: (isDev
                 // this is required on dev for Vite script to load
@@ -72,13 +62,13 @@ export async function getManifest() {
     }
 
     // FIXME: not work in MV3
-    if (isDev && false) {
-        // for content script, as browsers will cache them for each reload,
-        // we use a background script to always inject the latest version
-        // see src/background/contentScriptHMR.ts
-        delete manifest.content_scripts
-        manifest.permissions?.push('webNavigation')
-    }
+    // if (isDev && false) {
+    //     // for content script, as browsers will cache them for each reload,
+    //     // we use a background script to always inject the latest version
+    //     // see src/background/contentScriptHMR.ts
+    //     delete manifest.content_scripts
+    //     manifest.permissions?.push('webNavigation')
+    // }
 
     return manifest
 }

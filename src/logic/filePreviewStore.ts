@@ -1,4 +1,3 @@
-// filePreviewStore.ts
 import {reactive} from 'vue';
 
 export interface FilePreviewState {
@@ -6,13 +5,11 @@ export interface FilePreviewState {
     currentFile: File | null;
 }
 
-// Create a reactive state
 const state = reactive<FilePreviewState>({
     isOpen: false,
     currentFile: null,
 });
 
-// Functions to manipulate the state
 export function openFilePreview(file: File) {
     state.currentFile = file;
     state.isOpen = true;
@@ -42,5 +39,4 @@ export function openCurrentFileInNewTab() {
     }
 }
 
-// Export the state
 export const filePreviewStore = state;

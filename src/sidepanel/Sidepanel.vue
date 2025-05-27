@@ -13,7 +13,6 @@ function getFileUrl(file: File): string {
   return URL.createObjectURL(file);
 }
 
-// Clean up object URLs when component is unmounted
 onUnmounted(() => {
   capturedFiles.forEach(file => {
     const url = getFileUrl(file);
