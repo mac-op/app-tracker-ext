@@ -4,9 +4,22 @@ import {ref} from 'vue'
 import {storedSettings} from "~/logic";
 import InputBox from '~/components/InputBox.vue'
 import parsePosting from '~/sidepanel/parse/parse'
+import {capturedFiles} from "~/sidepanel/file";
 
 const showSettings = ref(false)
 const toggleSettings = () => showSettings.value = !showSettings.value
+
+function getFileUrl(file: File): string {
+  return URL.createObjectURL(file);
+}
+
+// Clean up object URLs when component is unmounted
+onUnmounted(() => {
+  capturedFiles.forEach(file => {
+    const url = getFileUrl(file);
+    URL.revokeObjectURL(url);
+  });
+});
 
 const job = ref({
   title: '',
@@ -76,24 +89,32 @@ function updateJob() {
       </div>
 
       <div class="pt-5 pr-3">
-        <InputBox label="Title" v-model="job.title"/>
-        <InputBox label="Company" v-model="job.company"/>
+        <div class="flex space-x-4">
+          <InputBox class="flex-1" label="Title" v-model="job.title"/>
+          <InputBox class="flex-1" label="Company" v-model="job.company"/>
+        </div>
         <ResizeableInput label="Description" v-model="job.description"/>
-        <InputBox label="Location" v-model="job.location"/>
-        <InputBox label="Date Posted" v-model="job.datePosted"/>
+        <div class="flex space-x-4">
+          <InputBox class="flex-1" label="Location" v-model="job.location"/>
+          <InputBox class="flex-1" label="Date Posted" v-model="job.datePosted"/>
+        </div>
+        <div class="flex space-x-4">
+          <InputBox class="flex-1" label="Internal ID" v-model="job.internalId"/>
+          <InputBox class="flex-1" label="Source" v-model="job.source"/>
+        </div>
         <InputBox label="URL" v-model="job.url"/>
-        <InputBox label="Internal ID" v-model="job.internalId"/>
-        <InputBox label="Source" v-model="job.source"/>
 
         <div class="pt-4">
-          <!--          <label class="block text-sm font-medium mb-1">Reposted</label>-->
           <div class="flex items-center">
-            <input type="checkbox" class="mr-2 font-medium"/>
+            <input type="checkbox"
+                   class="w-4 h-4 mr-2 accent-teal-600 hover:ring-teal-300 focus:ring-teal-500 focus:outline-none cursor-pointer"
+                   v-model="job.reposted"/>
             <span>Reposted?</span>
           </div>
         </div>
-
       </div>
+
+      <FileManager/>
     </template>
 
     <template v-else>
@@ -125,8 +146,8 @@ function updateJob() {
           </Dropdown>
         </div>
         <InputBox
-            v-model="storedSettings.openaiOptions.auth"
-            label="LLM Prompt"
+            v-model="storedSettings.backendUrl"
+            label="Backend URL"
         />
 
         <Accordion title="OpenAI" :defaultOpen="false">

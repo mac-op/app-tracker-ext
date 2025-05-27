@@ -1,4 +1,4 @@
-import {ParseResult, PostingParser, extractDetails} from "./base";
+import {extractDetails, ParseResult, PostingParser} from "./base";
 import browser from "webextension-polyfill";
 
 function getDetails(): ParseResult {
@@ -26,11 +26,9 @@ function getDetails(): ParseResult {
         console.error(value, unit, now);
         switch (unit) {
             case 'hour':
-                const a = new Date(now.getTime() - value * 60 * 60 * 1000);
-                return a;
+                return new Date(now.getTime() - value * 60 * 60 * 1000);
             case 'day':
-                const b = new Date(now.getTime() - value * 24 * 60 * 60 * 1000);
-                return b;
+                return new Date(now.getTime() - value * 24 * 60 * 60 * 1000);
             case 'week':
                 return new Date(now.getTime() - value * 7 * 24 * 60 * 60 * 1000);
             case 'month':

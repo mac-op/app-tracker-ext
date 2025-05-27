@@ -2,7 +2,7 @@
 import {useToggle} from '@vueuse/core'
 import 'uno.css'
 
-const [show, toggle] = useToggle(false)
+const [show, toggle] = useToggle(true)
 </script>
 
 <template>
