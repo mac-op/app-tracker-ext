@@ -14,10 +14,6 @@ const emit = defineEmits<{
 // File URL for preview thumbnail
 const fileUrl = ref('');
 
-function getFileExtension(filename: string): string {
-  return filename.split('.').pop()?.toUpperCase() || '';
-}
-
 function getFileIcon(type: string): string {
   const fileType = type.split('/')[0];
   const fileSubtype = type.split('/')[1];
@@ -58,43 +54,40 @@ onUnmounted(() => {
 <template>
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
     <!-- Preview area - make it clickable to view file -->
-    <div
-        class="h-32 bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer"
-        @click="previewFile"
-    >
-      <!-- Image preview for image files -->
-      <img
-          v-if="file.type.startsWith('image/')"
-          :src="fileUrl"
-          :alt="file.name"
-          class="max-h-full max-w-full object-contain"
-      />
-
-      <!-- PDF preview -->
-      <div v-else-if="file.type === 'application/pdf'" class="text-center">
-        <carbon-document-pdf class="w-16 h-16 text-red-500 mx-auto"/>
-        <span class="text-xs text-gray-500">PDF Document</span>
-      </div>
-
-      <!-- Default document icon for other files -->
-      <div v-else class="text-center">
-        <component :is="getFileIcon(file.type)" class="w-16 h-16 text-blue-400 mx-auto"/>
-        <span class="text-xs text-gray-500">{{ file.type.split('/')[1]?.toUpperCase() || 'Document' }}</span>
-      </div>
-    </div>
 
     <!-- File info -->
-    <div class="p-3">
+    <div class="p-3 flex items-center space-x-3">
       <div
-          class="truncate text-sm font-medium text-gray-700 cursor-pointer hover:text-blue-600"
+          class="h-20 min-w-16 bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer rounded-lg"
+          @click="previewFile"
+      >
+        <!-- Image preview for image files -->
+        <img
+            v-if="file.type.startsWith('image/')"
+            :src="fileUrl"
+            :alt="file.name"
+            class="max-h-full max-w-full object-contain"
+        />
+
+        <!-- PDF preview -->
+        <div v-else-if="file.type === 'application/pdf'" class="text-center">
+          <carbon-document-pdf class="w-16 h-16 text-red-500 mx-auto"/>
+        </div>
+
+        <!-- Default document icon for other files -->
+        <div v-else class="text-center">
+          <component :is="getFileIcon(file.type)" class="w-16 h-16 text-blue-400 mx-auto"/>
+          <span class="text-xs text-gray-500">{{ file.type.split('/')[1]?.toUpperCase() || 'Document' }}</span>
+        </div>
+      </div>
+
+      <div
+          class="flex flex-col truncate text-sm font-medium text-gray-700 cursor-pointer hover:text-blue-600"
           :title="file.name"
           @click="previewFile"
       >
         {{ file.name }}
-      </div>
-      <div class="flex items-center justify-between mt-1">
-        <span class="text-xs text-gray-500">{{ formatFileSize(file.size) }}</span>
-        <span class="text-xs text-gray-500">{{ getFileExtension(file.name) }}</span>
+        <span class="text-xs text-gray-500 mt-1">{{ formatFileSize(file.size) }}</span>
       </div>
     </div>
 

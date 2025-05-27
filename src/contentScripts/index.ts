@@ -1,29 +1,43 @@
 import browser from "webextension-polyfill";
 import {FileAction} from "~/logic/file-upload";
 
-function handleFileCapture(files: File[]) {
-    files.forEach(file => {
-        const reader = new FileReader();
+async function handleFileCapture(files: File[]) {
+    try {
+        // Check if the side panel is currently open
+        const response: null | { isOpen: boolean } = await browser.runtime.sendMessage({
+            query: "checkSidePanelState"
+        });
+        console.log(response);
 
-        reader.onload = () => {
-            console.log(`File captured: ${file.name}, size: ${file.size} bytes`);
-            browser.runtime.sendMessage({
-                action: FileAction.UPLOAD,
-                target: 'sidepanel',
-                data: {
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    content: reader.result as string, // base64 encoded content
-                    timestamp: Date.now(),
-                    fileId: crypto.randomUUID() // generate a unique ID for the file
-                }
-            }).catch(e => console.error(e));
-        };
+        if (response && response.isOpen) {
+            console.log("Side panel is open, processing files...");
+        } else {
+            console.log("Side panel is not open, skipping file processing.");
+            return; // Exit if the side panel is not open
+        }
+        files.forEach(file => {
+            const reader = new FileReader();
 
-        // Read file as data URL (base64)
-        reader.readAsDataURL(file);
-    });
+            reader.onload = () => {
+                browser.runtime.sendMessage({
+                    action: FileAction.UPLOAD,
+                    target: 'sidepanel',
+                    data: {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        content: reader.result as string, // base64 encoded content
+                        timestamp: Date.now(),
+                        fileId: crypto.randomUUID()
+                    }
+                }).catch(e => console.error(e));
+            };
+
+            reader.readAsDataURL(file);
+        });
+    } catch (error) {
+        console.error("Error checking side panel state:", error);
+    }
 }
 
 document.addEventListener('change', (event) => {

@@ -5,10 +5,7 @@ import {FileAction, FileMessage} from '~/logic/file-upload';
 // Store files
 const capturedFiles = reactive<File[]>([]);
 
-// Listen for messages from content script
 browser.runtime.onMessage.addListener((message) => {
-    console.log("Received message in sidepanel:", message);
-    
     const msg = message as FileMessage;
     if (msg.target === 'sidepanel' && msg.action === FileAction.UPLOAD) {
         try {

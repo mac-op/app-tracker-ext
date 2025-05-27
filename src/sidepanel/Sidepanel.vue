@@ -30,8 +30,22 @@ const job = ref({
   url: '',
   internalId: '',
   source: '',
-  reposted: true
+  reposted: false
 })
+
+const clearJob = () => {
+  job.value = {
+    title: '',
+    company: '',
+    description: '',
+    location: '',
+    datePosted: '',
+    url: '',
+    internalId: '',
+    source: '',
+    reposted: false
+  }
+}
 
 function updateJob() {
   parsePosting()
@@ -82,10 +96,11 @@ function updateJob() {
         </button>
       </div>
 
-      <div class="pt-5 px-2">
+      <div class="pt-5 px-1 flex items-center justify-between w-full">
         <button class="btn" @click="updateJob()">
           Parse this posting
         </button>
+        <button class="text-blue-600 pr-4 hover:text-blue-800" @click="clearJob">Clear</button>
       </div>
 
       <div class="pt-5 pr-3">

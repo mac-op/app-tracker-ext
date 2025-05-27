@@ -33,7 +33,7 @@ function removeFile(index: number) {
     </div>
 
     <!-- File cards grid -->
-    <div v-if="capturedFiles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+    <div v-if="capturedFiles.length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
       <FileCard
           v-for="(file, index) in capturedFiles"
           :key="index"
