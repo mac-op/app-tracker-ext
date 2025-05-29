@@ -23,12 +23,13 @@ Uploaded files can be previewed with a pop up.
 
 The extension requires a backend service to store job postings and files. The base URL can be set in the setting menu.\
 A basic implementation is provided [here](https://github.com/mac-op/job-tracker-backend), which uses Golang, AWS Lambda,
-S3 and DynamoDB. [This](https://github.com/mac-op/job-tracker-sheets) is another implementation with FastAPI that uses
+S3 and DynamoDB. [This](https://github.com/mac-op/app-tracker-sheets) is another implementation with FastAPI that uses
 Google Sheets and Google Drive as a datastore.
 
 The backend service should implement the following endpoints:
 
 - `POST /job`: Uploads a job application and optional associated files.
+  
   **Headers**
     - Content-Type: multipart/form-data
 
