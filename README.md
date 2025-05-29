@@ -11,7 +11,8 @@ It also allows users to
 upload files related to job applications and
 automatically sends the job postings and attached files to an external database (customizable).
 The extension can automatically pick up files that are uploaded to a website (when the extension is active).
-Uploaded files can be previewed in the extension.
+Uploaded files can be previewed with a pop up.
+
 
 ----------------
 ![demo](./assets/img.png)
