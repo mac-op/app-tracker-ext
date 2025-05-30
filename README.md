@@ -16,7 +16,14 @@ Uploaded files can be previewed with a pop up.
 
 ----------------
 ![demo](./assets/img.png)
+----------------
 
+## Installation
+
+You can install by downloading/cloning the source code and run `pnpm build` to build the extension, then load it as an
+unpacked extension in your browser. You will also need a backend/storage option (see the Backend Service section
+below).\
+There is no plan to publish it to the Chrome Web Store or Firefox Add-ons.
 ----------------
 
 ## Backend Service
@@ -29,6 +36,7 @@ Google Sheets and Google Drive as a datastore.
 The backend service should implement the following endpoints:
 
 - `POST /job`: Uploads a job application and optional associated files.
+
   **Headers**
     - Content-Type: multipart/form-data
 
@@ -36,7 +44,7 @@ The backend service should implement the following endpoints:
         - application (required): JSON-encoded object representing the job application.
         - files (optional): One or more files to be attached (e.g., resume, cover letter).
 
-  `application` JSON Schema:
+  `application` JSON:
 
   ```json
   {
@@ -50,31 +58,29 @@ The backend service should implement the following endpoints:
       "source": "string",
       "reposted": "boolean",
       "date_applied": "string (YYYY-MM-DD)",
-      "num_files": 0
+      "num_files": "integer"
   }
   ```
   Sample request:
   ```bash
-    POST /upload
-    Content-Type: multipart/form-data; boundary=----123
-    
-    ------123
-    Content-Disposition: form-data; name="application"
-    Content-Type: application/json
-    
-    {
-    "title": "My Application",
-    "description": "This is a sample application",
-    "company" : "Test Company"
-    }
-    ------123
-    Content-Disposition: form-data; name="files"; filename="text.txt"
-    Content-Type: text/plain
-    This is the content of the file.
-    ------123
-    
+  POST /upload
+  Content-Type: multipart/form-data; boundary=----123
+  
+  ------123
+  Content-Disposition: form-data; name="application"
+  Content-Type: application/json
+  
+  {
+  "title": "My Application",
+  "description": "This is a sample application",
+  "company" : "Test Company"
+  }
+  ------123
+  Content-Disposition: form-data; name="files"; filename="text.txt"
+  Content-Type: text/plain
+  This is the content of the file.
+  ------123
   ```
-
 - `GET /jobs`: (implementation is optional for the purposes of this extension) to get all job applications
 - `GET /job/:id`: (optional) to get a specific job application by ID
 - `PUT /job/:id`: (optional) to update a specific job application by ID

@@ -54,6 +54,4 @@ const settingsDefault = ref<UserSettings>({
     backendUrl: '',
 })
 
-
-export const storageDemo = useWebExtensionStorage<string>('webext-demo', '')
 export const storedSettings = useWebExtensionStorage<UserSettings>('settings', settingsDefault)

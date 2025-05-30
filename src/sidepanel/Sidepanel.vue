@@ -1,39 +1,55 @@
 <script setup lang="ts">
-
 import {ref} from 'vue'
 import {storedSettings} from "~/logic";
 import InputBox from '~/components/InputBox.vue'
 import parsePosting from '~/sidepanel/parse/parse'
 import {capturedFiles} from "~/sidepanel/file";
+import axios from "axios";
+import {onUnmounted} from "vue";
 
 const showSettings = ref(false)
 const toggleSettings = () => showSettings.value = !showSettings.value
 
+const isSaving = ref(false)
+const isParsing = ref(false)
+const notification = ref({
+    show: false,
+    message: '',
+    type: 'success'
+})
+
+const getNotificationClass = () => {
+    return {
+        success: 'bg-green-100 text-green-800 border-l-4 border-green-500',
+        error: 'bg-red-100 text-red-800 border-l-4 border-red-500',
+        warning: 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-500'
+    }[notification.value.type]
+}
+
+const showNotification = (message: string, type = 'success') => {
+    notification.value = {
+        show: true,
+        message,
+        type
+    }
+
+    setTimeout(() => {
+        notification.value.show = false
+    }, 3000)
+}
+
 function getFileUrl(file: File): string {
-  return URL.createObjectURL(file);
+    return URL.createObjectURL(file);
 }
 
 onUnmounted(() => {
-  capturedFiles.forEach(file => {
-    const url = getFileUrl(file);
-    URL.revokeObjectURL(url);
-  });
+    capturedFiles.forEach(file => {
+        const url = getFileUrl(file);
+        URL.revokeObjectURL(url);
+    });
 });
 
 const job = ref({
-  title: '',
-  company: '',
-  description: '',
-  location: '',
-  datePosted: '',
-  url: '',
-  internalId: '',
-  source: '',
-  reposted: false
-})
-
-const clearJob = () => {
-  job.value = {
     title: '',
     company: '',
     description: '',
@@ -43,43 +59,164 @@ const clearJob = () => {
     internalId: '',
     source: '',
     reposted: false
-  }
+})
+
+const clearJob = () => {
+    job.value = {
+        title: '',
+        company: '',
+        description: '',
+        location: '',
+        datePosted: '',
+        url: '',
+        internalId: '',
+        source: '',
+        reposted: false
+    }
 }
 
-function updateJob() {
-  parsePosting()
-      .then((result) => {
+// const validateJob = () => {
+//     if (!job.value.title) {
+//         showNotification('Title is required', 'error')
+//         return false
+//     }
+//     if (!job.value.company) {
+//         showNotification('Company is required', 'error')
+//         return false
+//     }
+//     if (!job.value.description) {
+//         showNotification('Description is required', 'error')
+//         return false
+//     }
+//     if (!job.value.url) {
+//         showNotification('URL is required', 'error')
+//         return false
+//     }
+//     return true
+// }
+
+async function parsePage() {
+    if (isParsing.value) return
+    isParsing.value = true
+
+    try {
+        const result = await parsePosting()
+
         if (result instanceof Error) {
-          console.error('Error parsing posting:', result)
-          return
+            console.error('Error parsing posting:', result)
+            showNotification(result.message || 'Error parsing job posting', 'error')
+            return
         }
+
         if (typeof result === 'string') {
-          console.error('Unexpected result type:', result)
-          return
+            console.error('Unexpected result type:', result)
+            showNotification('Unexpected result format', 'error')
+            return
         }
+
+        // if (!validateJob()) {
+        //     isParsing.value = false
+        //     return
+        // }
+
         console.log('Parsed posting:', result)
         job.value = {
-          title: result.title || '',
-          company: result.company || '',
-          description: result.description || '',
-          location: result.location || '',
-          datePosted: result.datePosted instanceof Date
-              ? result.datePosted.toDateString()
-              : result.datePosted || '',
-          url: result.url || '',
-          internalId: result.internalId || '',
-          source: result.source || '',
-          reposted: result.reposted || false
+            title: result.title || '',
+            company: result.company || '',
+            description: result.description || '',
+            location: result.location || '',
+            datePosted: result.datePosted instanceof Date
+                ? result.datePosted.toDateString()
+                : result.datePosted || '',
+            url: result.url || '',
+            internalId: result.internalId || '',
+            source: result.source || '',
+            reposted: result.reposted || false
         }
-      })
-      .catch((error) => {
+
+        showNotification('Job posting parsed successfully')
+    } catch (error) {
         console.error('Error parsing posting:', error)
-      })
+        showNotification('Failed to parse job posting', 'error')
+    } finally {
+        isParsing.value = false
+    }
+}
+
+async function saveJob() {
+    if (isSaving.value) return // Prevent multiple submissions
+
+
+    isSaving.value = true
+    const formData = new FormData();
+
+    const applicationData = {
+        title: job.value.title,
+        description: job.value.description,
+        company: job.value.company,
+        location: job.value.location,
+        url: job.value.url,
+        date_posted: job.value.datePosted,
+        internal_id: job.value.internalId,
+        source: job.value.source,
+        reposted: job.value.reposted,
+        date_applied: new Date().toISOString().split('T')[0],
+        num_files: capturedFiles.length
+    };
+
+    formData.append('application', JSON.stringify(applicationData));
+
+    capturedFiles.forEach((file) => {
+        formData.append('files', file);
+    });
+
+    const backendUrl = storedSettings.value.backendUrl || '';
+    if (!backendUrl) {
+        console.error('Backend URL not set in settings');
+        showNotification('Please set Backend URL in settings', 'error');
+        isSaving.value = false;
+        return;
+    }
+
+    let success = 0, failure = 0;
+    for (const url of backendUrl.split('|')) {
+        try {
+            const response = await axios.post(`${url}/upload`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            console.log(`${url} accepted request with response: \n${JSON.stringify(response.data)}`);
+            success++;
+        } catch (error) {
+            console.error('Error saving job:', error);
+            failure++;
+        }
+        if (failure > 0 && success == 0)
+            showNotification('Failed to save job posting to all backends', 'error');
+        else if (success > 0 && failure > 0)
+            showNotification(`Job saved successfully to ${success} backend(s), failed on ${failure}`, 'warning');
+        else
+            showNotification('Job saved successfully!');
+    }
+    isSaving.value = false;
 }
 </script>
 
 <template>
   <main class="w-full h-full px-4 py-5 text-gray-700">
+    <div
+      v-show="notification.show"
+      class="fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg z-50 transition-linear duration-300 ease-in-out"
+      :class="[
+          getNotificationClass(),
+          notification.show ? 'opacity-100' : 'opacity-0'
+        ]"
+    >
+      {{ notification.message }}
+    </div>
+
     <template v-if="!showSettings">
       <div class="flex justify-between items-center w-full mb-4">
         <div class="flex items-center">
@@ -87,17 +224,30 @@ function updateJob() {
           <span class="ml-2 text-lg font-semibold">Track yo shit</span>
         </div>
         <button
-            class="p-2 text-gray-600 hover:text-gray-800"
-            @click="toggleSettings"
-            title="Settings"
+          class="p-2 text-gray-600 hover:text-gray-800"
+          @click="toggleSettings"
+          title="Settings"
         >
           <carbon-settings class="w-5 h-5"/>
         </button>
       </div>
 
       <div class="pt-5 px-1 flex items-center justify-between w-full">
-        <button class="btn" @click="updateJob()">
-          Parse this posting
+        <button
+          class="btn flex items-center justify-center"
+          @click="parsePage()"
+          :disabled="isParsing"
+        >
+          <span v-if="!isParsing">Parse this posting</span>
+          <span v-else class="flex items-center">
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Parsing...
+          </span>
         </button>
         <button class="text-blue-600 pr-4 hover:text-blue-800" @click="clearJob">Clear</button>
       </div>
@@ -129,14 +279,32 @@ function updateJob() {
       </div>
 
       <FileManager/>
+      <div class="mt-10 flex justify-end">
+        <button
+          class="btn flex items-center justify-center relative"
+          @click="saveJob()"
+          :disabled="isSaving"
+        >
+          <span v-if="!isSaving">Save Job</span>
+          <span v-else class="flex items-center">
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Saving...
+          </span>
+        </button>
+      </div>
     </template>
 
     <template v-else>
       <div class="flex items-center w-full mb-8">
         <button
-            class="text-gray-600 hover:text-gray-800 mr-2"
-            @click="toggleSettings"
-            title="Back"
+          class="text-gray-600 hover:text-gray-800 mr-2"
+          @click="toggleSettings"
+          title="Back"
         >
           <carbon-chevron-left class="w-5 h-5"/>
         </button>
@@ -147,70 +315,69 @@ function updateJob() {
         <div>
           <label class="block font-medium mb-1 px-1">LLM Provider</label>
           <Dropdown
-              v-model="storedSettings.llmProvider"
-              :options="
+            v-model="storedSettings.llmProvider"
+            :options="
                [
                   { label: 'OpenAI', value: 'openai' },
                   { label: 'Anthropic', value: 'anthropic' },
                   { label: 'Google', value: 'google' },
                   { label: 'Ollama', value: 'ollama' },
                ]"
-              placeholder="Select an option"
-              class="w-full">
+            placeholder="Select an option"
+            class="w-full">
           </Dropdown>
         </div>
         <InputBox
-            v-model="storedSettings.backendUrl"
-            label="Backend URL"
+          v-model="storedSettings.backendUrl"
+          label="Backend URL"
         />
 
         <Accordion title="OpenAI" :defaultOpen="false">
           <InputBox
-              v-model="storedSettings.openaiOptions.auth"
-              label="Auth"
+            v-model="storedSettings.openaiOptions.auth"
+            label="Auth"
           />
           <InputBox
-              v-model="storedSettings.openaiOptions.model"
-              label="Model"
+            v-model="storedSettings.openaiOptions.model"
+            label="Model"
           />
         </Accordion>
 
         <Accordion title="Anthropic" :defaultOpen="false">
           <InputBox
-              v-model="storedSettings.anthropicOptions.auth"
-              label="Auth"
+            v-model="storedSettings.anthropicOptions.auth"
+            label="Auth"
           />
           <InputBox
-              v-model="storedSettings.anthropicOptions.model"
-              label="Model"
+            v-model="storedSettings.anthropicOptions.model"
+            label="Model"
           />
         </Accordion>
         <Accordion title="Google" :defaultOpen="false">
           <InputBox
-              v-model="storedSettings.googleOptions.auth"
-              label="Auth"
+            v-model="storedSettings.googleOptions.auth"
+            label="Auth"
           />
           <InputBox
-              v-model="storedSettings.googleOptions.model"
-              label="Model"
+            v-model="storedSettings.googleOptions.model"
+            label="Model"
           />
         </Accordion>
 
         <Accordion title="Ollama" :defaultOpen="false">
           <InputBox
-              v-model="storedSettings.ollamaOptions.endpoint"
-              label="Host"
+            v-model="storedSettings.ollamaOptions.endpoint"
+            label="Host"
           />
           <InputBox
-              v-model="storedSettings.ollamaOptions.auth"
-              label="Auth"
+            v-model="storedSettings.ollamaOptions.auth"
+            label="Auth"
           />
           <InputBox
-              v-model="storedSettings.ollamaOptions.model"
-              label="Model"
+            v-model="storedSettings.ollamaOptions.model"
+            label="Model"
           />
         </Accordion>
-
       </div>
 
       <div class="mt-10 flex justify-end">

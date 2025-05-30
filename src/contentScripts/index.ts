@@ -3,18 +3,6 @@ import {FileAction} from "~/logic/file-upload";
 
 async function handleFileCapture(files: File[]) {
     try {
-        // Check if the side panel is currently open
-        const response: null | { isOpen: boolean } = await browser.runtime.sendMessage({
-            query: "checkSidePanelState"
-        });
-        console.log(response);
-
-        if (response && response.isOpen) {
-            console.log("Side panel is open, processing files...");
-        } else {
-            console.log("Side panel is not open, skipping file processing.");
-            return; // Exit if the side panel is not open
-        }
         files.forEach(file => {
             const reader = new FileReader();
 
@@ -36,7 +24,7 @@ async function handleFileCapture(files: File[]) {
             reader.readAsDataURL(file);
         });
     } catch (error) {
-        console.error("Error checking side panel state:", error);
+        console.error("Error sending file to side panel:", error);
     }
 }
 

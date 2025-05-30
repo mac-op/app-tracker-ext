@@ -100,7 +100,6 @@ export default defineConfig(({command}) => ({
         },
         rollupOptions: {
             input: {
-                options: r('src/options/index.html'),
                 sidepanel: r('src/sidepanel/index.html'),
             },
         },
