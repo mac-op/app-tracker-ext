@@ -30,13 +30,13 @@ There is no plan to publish it to the Chrome Web Store or Firefox Add-ons.
 
 The extension requires a backend service to store job postings and files. The base URL can be set in the setting menu.\
 A basic implementation is provided [here](https://github.com/mac-op/job-tracker-backend), which uses Golang, AWS Lambda,
-S3 and DynamoDB. [This](https://github.com/mac-op/job-tracker-sheets) is another implementation with FastAPI that uses
+S3 and DynamoDB. [This](https://github.com/mac-op/app-tracker-sheets) is another implementation with FastAPI that uses
 Google Sheets and Google Drive as a datastore.
 
 The backend service should implement the following endpoints:
 
 - `POST /job`: Uploads a job application and optional associated files.
-
+  
   **Headers**
     - Content-Type: multipart/form-data
 
@@ -81,6 +81,7 @@ The backend service should implement the following endpoints:
   This is the content of the file.
   ------123
   ```
+
 - `GET /jobs`: (implementation is optional for the purposes of this extension) to get all job applications
 - `GET /job/:id`: (optional) to get a specific job application by ID
 - `PUT /job/:id`: (optional) to update a specific job application by ID
