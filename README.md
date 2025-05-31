@@ -24,7 +24,7 @@ You can install by downloading/cloning the source code and run `pnpm build` to b
 unpacked extension in your browser. You will also need a backend/storage option (see the Backend Service section
 below).\
 There is no plan to publish it to the Chrome Web Store or Firefox Add-ons.
-----------------
+
 
 ## Backend Service
 
