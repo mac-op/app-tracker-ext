@@ -2,7 +2,7 @@
 import {ref, reactive} from 'vue'
 import axios from 'axios'
 import {storedSettings} from "~/logic"
-import {JobApplication} from "~/dashboard/JobApplicationDashboard.vue"
+import {JobAppResponse} from "~/dashboard/JobApplicationDashboard.vue"
 import FilterGroup from "~/dashboard/FilterGroup.vue" // Import the new component
 
 interface Filter {
@@ -60,7 +60,7 @@ const query = reactive<Query>({
     page: 1
 })
 
-const jobs = ref<JobApplication[] | null>([])
+const jobs = ref<JobAppResponse[] | null>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
@@ -133,8 +133,7 @@ const fetchJobs = async () => {
 
         query.where = cleanGroup(query.where)
 
-        console.log('Sending query:', query)
-        const response = await axios.post(
+        const response = await axios.post<{ results: JobAppResponse[] }>(
             `${storedSettings.value.backendUrl}/applications`,
             query
         )

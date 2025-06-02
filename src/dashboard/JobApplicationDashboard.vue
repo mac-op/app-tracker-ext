@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import {ref, onMounted, computed, inject} from 'vue'
+import {ref, onMounted, computed, inject, watch} from 'vue'
+import FilePreviewModal from '~/components/FilePreviewModal.vue'
+import axios from "axios"
+import {
+    filePreviewStore,
+    closeFilePreview,
+    openFilePreview,
+    downloadCurrentFile,
+    openCurrentFileInNewTab
+} from '~/logic/filePreviewStore'
+import {storedSettings} from "~/logic";
 
-export interface JobApplication {
+export interface JobAppResponse {
     id: string
     title: string
     company: string
@@ -16,10 +26,11 @@ export interface JobApplication {
     files?: string[]
 }
 
-const jobs = ref<JobApplication[]>([])
+const jobs = ref<JobAppResponse[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 const selectedJobId = ref<string | null>(null)
+const previewLoading = ref(false)
 
 const queryBuilderJobs = inject('jobs', ref([]))
 const queryBuilderLoading = inject('loading', ref(false))
@@ -54,7 +65,7 @@ const selectJob = (jobId: string) => {
 }
 
 // Get the currently selected job
-const selectedJob = computed(() => {
+const selectedJob = computed<JobAppResponse | null>(() => {
     if (!selectedJobId.value) return null
     return jobs.value.find(job => job.id === selectedJobId.value) || null
 })
@@ -70,6 +81,39 @@ const daysSinceApplied = computed(() => {
 
     return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`
 })
+
+// Function to handle file preview
+const handleFilePreview = async (appId: string, fileName: string) => {
+    try {
+        previewLoading.value = true
+        // Fetch the file from the backend
+        const response = await axios.get(`${storedSettings.value.backendUrl}/files/${appId}/${fileName}`)
+
+        if (response.data && response.data.url) {
+            // Fetch the actual file from the provided URL
+            const fileResponse = await fetch(response.data.url)
+
+            if (!fileResponse.ok)
+                error.value = `Failed to fetch file: ${fileResponse.statusText}`
+
+            // Get the file blob
+            const blob = await fileResponse.blob()
+
+            // Create a File object from the blob
+            const file = new File([blob], fileName, {type: blob.type})
+
+            // Open the file preview
+            openFilePreview(file)
+        } else {
+            error.value = 'Invalid response format from server'
+        }
+    } catch (err) {
+        console.error('Error fetching file:', err)
+        error.value = `Failed to load file preview: ${(err as Error).message}`
+    } finally {
+        previewLoading.value = false
+    }
+}
 
 onMounted(() => {
     if (!queryBuilderFetchJobs) return
@@ -184,7 +228,15 @@ onMounted(() => {
               <ul class="list-disc pl-5">
                 <li v-for="(file, index) in selectedJob.files" :key="index" class="mb-1">
                   <span class="i-carbon-document mr-1"></span>
-                  <a href="#" class="text-blue-600 hover:underline">{{ file }}</a>
+                  <a
+                    href="#"
+                    class="text-blue-600 hover:underline"
+                    @click.prevent="handleFilePreview(selectedJob.id, file)"
+                  >
+                    {{ file }}
+                    <span v-if="previewLoading"
+                          class="ml-1 inline-block w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                  </a>
                 </li>
               </ul>
             </div>
@@ -223,5 +275,14 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- File Preview Modal -->
+    <FilePreviewModal
+      :file="filePreviewStore.currentFile"
+      :visible="filePreviewStore.isOpen"
+      @close="closeFilePreview"
+      @download="downloadCurrentFile"
+      @open-in-new-tab="openCurrentFileInNewTab"
+    />
   </div>
 </template>
