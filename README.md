@@ -15,7 +15,7 @@ Uploaded files can be previewed with a pop up.
 
 
 ----------------
-![demo](./assets/img.png)
+![demo](assets/ext.png)
 ----------------
 
 ## Installation
@@ -25,7 +25,6 @@ unpacked extension in your browser. You will also need a backend/storage option 
 below).\
 There is no plan to publish it to the Chrome Web Store or Firefox Add-ons.
 
-
 ## Backend Service
 
 The extension requires a backend service to store job postings and files. The base URL can be set in the setting menu.\
@@ -33,35 +32,45 @@ A basic implementation is provided [here](https://github.com/mac-op/job-tracker-
 S3 and DynamoDB. [This](https://github.com/mac-op/app-tracker-sheets) is another implementation with FastAPI that uses
 Google Sheets and Google Drive as a datastore.
 
+Data fetched from the backend will populate the dashboard at the extension options page, where user can query and edit
+past application details.
+
+![img](./assets/dashboard.png)
+
 The backend service should implement the following endpoints:
 
-- `POST /job`: Uploads a job application and optional associated files.
-  
-  **Headers**
-    - Content-Type: multipart/form-data
+### `POST /job`
+
+Uploads a job application and optional associated files.
+
+**Headers**
+
+- Content-Type: multipart/form-data
 
     - Form Fields
         - application (required): JSON-encoded object representing the job application.
         - files (optional): One or more files to be attached (e.g., resume, cover letter).
 
-  `application` JSON:
+`application` JSON:
 
   ```json
   {
-      "title": "string",
-      "description": "string",
-      "company": "string",
-      "location": "string",
-      "url": "string",
-      "date_posted": "string (YYYY-MM-DD)",
-      "internal_id": "string",
-      "source": "string",
-      "reposted": "boolean",
-      "date_applied": "string (YYYY-MM-DD)",
-      "num_files": "integer"
-  }
+    "title": "string",
+    "description": "string",
+    "company": "string",
+    "location": "string",
+    "url": "string",
+    "date_posted": "string (YYYY-MM-DD)",
+    "internal_id": "string",
+    "source": "string",
+    "reposted": "boolean",
+    "date_applied": "string (YYYY-MM-DD)",
+    "num_files": "integer"
+}
   ```
-  Sample request:
+
+Sample request:
+
   ```bash
   POST /upload
   Content-Type: multipart/form-data; boundary=----123
@@ -82,6 +91,87 @@ The backend service should implement the following endpoints:
   ------123
   ```
 
-- `GET /jobs`: (implementation is optional for the purposes of this extension) to get all job applications
-- `GET /job/:id`: (optional) to get a specific job application by ID
-- `PUT /job/:id`: (optional) to update a specific job application by ID
+### `POST /applications`
+
+Queries job applications based on provided filters and pagination options. Top-level fields:
+
+`where` (object) - A collection of conditions, ie. `filters` or groups of conditions (`subgroups`). Subgroups could have
+their own subgroups and filters. \
+`sort_by` (string) - Field to sort on (optional).\
+`sort_order` (string) - `asc` or `desc` (optional).\
+`limit` (number) - Maximum number of records (optional).\
+`page` (number) - Page number for pagination (optional).
+
+**Example:**
+
+- Request
+    ```json
+    {
+        "where": {
+            "filters": [
+                {
+                    "field": "title",
+                    "operator": "contains",
+                    "value": "engineer"
+                }
+            ],
+            "subgroups": [
+                {
+                    "filters": [],
+                    "subgroups": [],
+                    "operator": "or"
+                }
+            ],
+            "operator": "and"
+        },
+        "sort_by": "company",
+        "sort_order": "asc",
+        "limit": 10,
+        "page": 1
+    }
+    ```
+- Response:
+
+    ```json
+    {
+        "results": [
+            {
+                "id": "",
+                "title": "",
+                "description": "",
+                "company": "",
+                "url": "",
+                "date_posted": "",
+                "internal_id": "",
+                "source": "",
+                "reposted": false,
+                "date_applied": "2023-06-02T00:00:36.917Z",
+                "files": [
+                    {
+                        "name": "file.txt",
+                        "link": "https://example.com/file.txt"
+                    }
+                ]
+            }
+        ]
+    }
+    ```
+
+### `PUT /job/:id`:
+
+Update a specific job application by ID
+
+```json
+{
+    "title": "Updated Title",
+    "description": "Updated Description",
+    "company": "Updated Company",
+    "location": "Updated Location",
+    "url": "https://updated-url.com",
+    "date_posted": "2023-10-01",
+    "internal_id": "12345",
+    "source": "Updated Source",
+    "reposted": false,
+    "date_applied": "2023-10-02"
+}
+```
