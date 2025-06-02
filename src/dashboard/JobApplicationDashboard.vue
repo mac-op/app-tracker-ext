@@ -40,7 +40,10 @@ const queryBuilderFetchJobs = inject<Ref<() => {}> | null>('fetchJobs', null)
 // Watch for updates from QueryBuilder
 watch([queryBuilderJobs, queryBuilderLoading, queryBuilderError],
     ([newJobs, newLoading, newError]) => {
-        jobs.value = newJobs
+        if (newJobs === null)
+            jobs.value = []
+        else if (newJobs !== undefined)
+            jobs.value = newJobs
         loading.value = newLoading
         error.value = newError
     },
