@@ -6,6 +6,7 @@ import parsePosting from '~/sidepanel/parse/parse'
 import {capturedFiles} from "~/sidepanel/file";
 import axios from "axios";
 import {onUnmounted} from "vue";
+import browser from 'webextension-polyfill'
 
 const showSettings = ref(false)
 const toggleSettings = () => showSettings.value = !showSettings.value
@@ -146,7 +147,6 @@ async function parsePage() {
 async function saveJob() {
     if (isSaving.value) return // Prevent multiple submissions
 
-
     isSaving.value = true
     const formData = new FormData();
 
@@ -160,7 +160,7 @@ async function saveJob() {
         internal_id: job.value.internalId,
         source: job.value.source,
         reposted: job.value.reposted,
-        date_applied: new Date().toISOString().split('T')[0],
+        date_applied: new Date().toISOString(),
         num_files: capturedFiles.length
     };
 
@@ -178,27 +178,16 @@ async function saveJob() {
         return;
     }
 
-    let success = 0, failure = 0;
-    for (const url of backendUrl.split('|')) {
-        try {
-            const response = await axios.post(`${url}/upload`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+    try {
+        const response = await axios.post(`${backendUrl}/upload`, formData, {
+            headers: {'Content-Type': 'multipart/form-data'}
+        });
 
-            console.log(`${url} accepted request with response: \n${JSON.stringify(response.data)}`);
-            success++;
-        } catch (error) {
-            console.error('Error saving job:', error);
-            failure++;
-        }
-        if (failure > 0 && success == 0)
-            showNotification('Failed to save job posting to all backends', 'error');
-        else if (success > 0 && failure > 0)
-            showNotification(`Job saved successfully to ${success} backend(s), failed on ${failure}`, 'warning');
-        else
-            showNotification('Job saved successfully!');
+        console.log(`${backendUrl} accepted request with response: \n${JSON.stringify(response.data)}`);
+        showNotification('Job saved successfully!');
+    } catch (error) {
+        console.error('Error saving job:', error);
+        showNotification('Failed to save job posting to all backends', 'error');
     }
     isSaving.value = false;
 }
@@ -219,16 +208,17 @@ async function saveJob() {
 
     <template v-if="!showSettings">
       <div class="flex justify-between items-center w-full mb-4">
-        <div class="flex items-center">
+        <div class="flex items-center hover:text-teal-6 hover:cursor-pointer"
+             @click="browser.runtime.openOptionsPage()">
           <Logo/>
-          <span class="ml-2 text-lg font-semibold">Track yo shit</span>
+          <span class="ml-2 text-lg font-semibold">Track yo shit </span>
         </div>
         <button
-          class="p-2 text-gray-600 hover:text-gray-800"
+          class="p-2 text-gray-600 hover:text-gray-800 pr-4"
           @click="toggleSettings"
           title="Settings"
         >
-          <carbon-settings class="w-5 h-5"/>
+          <carbon-settings class="w-5 h-5 scale-120"/>
         </button>
       </div>
 
@@ -279,7 +269,7 @@ async function saveJob() {
       </div>
 
       <FileManager/>
-      <div class="mt-10 flex justify-end">
+      <div class="mt-10 flex justify-end pr-2">
         <button
           class="btn flex items-center justify-center relative"
           @click="saveJob()"

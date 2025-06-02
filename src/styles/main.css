@@ -24,7 +24,7 @@ body,
 .box {
     @apply w-full px-2 py-2.5 bg-white border border-gray-300 rounded-md shadow-sm
     hover:border-teal-500 focus:border-teal-500
-    focus:ring-2 focus:ring-teal-500 focus:outline-none;
+    focus:ring-1 focus:ring-teal-500 focus:outline-none;
     position: relative;
     padding-right: 2.5rem;
     appearance: none;

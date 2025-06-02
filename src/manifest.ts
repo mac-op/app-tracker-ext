@@ -15,6 +15,10 @@ export async function getManifest() {
             default_icon: './assets/icon-512.png',
             default_title: "Click me",
         },
+        options_ui: {
+            page: 'dist/dashboard/index.html',
+            open_in_tab: true,
+        },
         background: isFirefox
             ? {
                 scripts: ['dist/background/index.mjs'],

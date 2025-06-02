@@ -1,5 +1,5 @@
 <template>
-  <a class="icon-btn mx-2 text-2xl" rel="noreferrer" href="https://github.com" target="_blank" title="GitHub">
+  <span class="icon-btn mx-2 text-2xl" rel="noreferrer" title="Dashboard">
     <pixelarticons-power/>
-  </a>
+  </span>
 </template>
