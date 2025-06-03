@@ -32,6 +32,11 @@ const error = ref<string | null>(null)
 const selectedJobId = ref<string | null>(null)
 const previewLoading = ref(false)
 
+const showNotification = inject('showNotification',
+    (message: string, _ = 'error') => {
+        console.error('showNotification not provided', message);
+    });
+
 const queryBuilderJobs = inject('jobs', ref([]))
 const queryBuilderLoading = inject('loading', ref(false))
 const queryBuilderError = inject('error', ref(null))
@@ -46,6 +51,11 @@ watch([queryBuilderJobs, queryBuilderLoading, queryBuilderError],
             jobs.value = newJobs
         loading.value = newLoading
         error.value = newError
+
+        // Show notification if there's an error
+        if (newError) {
+            showNotification(newError, 'error')
+        }
     },
     {immediate: true}
 )
@@ -94,19 +104,21 @@ const handleFilePreview = async (appId: string, fileName: string) => {
 
         if (response.data && response.data.url) {
             const fileResponse = await fetch(response.data.url)
-            if (!fileResponse.ok)
-                error.value = `Failed to fetch file: ${fileResponse.statusText}`
+            if (!fileResponse.ok) {
+                showNotification(`Failed to fetch file: ${fileResponse.statusText}`, 'error')
+                return
+            }
 
             const blob = await fileResponse.blob()
             const file = new File([blob], fileName, {type: blob.type})
 
             openFilePreview(file)
         } else {
-            error.value = 'Invalid response format from server'
+            showNotification('Invalid response format from server', 'error')
         }
     } catch (err) {
         console.error('Error fetching file:', err)
-        error.value = `Failed to load file preview: ${(err as Error).message}`
+        showNotification(`Failed to load file preview: ${(err as Error).message}`, 'error')
     } finally {
         previewLoading.value = false
     }
@@ -127,10 +139,6 @@ onMounted(() => {
       <div class="job-list md:col-span-1 border rounded-md overflow-hidden h-full flex flex-col">
         <div class="bg-gray-100 dark:bg-gray-800 p-3 border-b flex justify-between items-center">
           <h2 class="font-semibold">Applications ({{ jobs.length || 0 }})</h2>
-        </div>
-
-        <div v-if="error" class="p-3 text-sm text-red-700 bg-red-50">
-          <p>{{ error }}</p>
         </div>
 
         <div class="job-items overflow-y-auto max-h-[70vh]">
@@ -171,7 +179,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Right Panel: Job Details -->
       <div class="job-details md:col-span-2 border rounded-md">
         <div v-if="selectedJob" class="h-full flex flex-col">
           <!-- Job Header -->

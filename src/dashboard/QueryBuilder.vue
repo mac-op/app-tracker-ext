@@ -63,6 +63,10 @@ const query = reactive<Query>({
 const jobs = ref<JobAppResponse[] | null>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+const showNotification = inject('showNotification',
+    (message: string, _ = 'error') => {
+        console.error('showNotification not provided', message);
+    });
 
 // Emit events for parent components
 const emit = defineEmits(['update:jobs', 'update:loading', 'update:error', 'update:fetchJobs'])
@@ -82,8 +86,8 @@ const removeFilter = (group: FilterGroup, index: number) => {
 const addSubgroup = (group: FilterGroup) => {
     group.subgroups.push({
         filters: [{
-            field: fieldOptions[0].value,
-            operator: operatorOptions[0].value,
+            field: '',
+            operator: '',
             value: ''
         }],
         subgroups: [],
@@ -106,6 +110,11 @@ const toggleOperator = (group: FilterGroup) => {
 
 const fetchJobs = async () => {
     try {
+        if (!storedSettings.value.backendUrl) {
+            showNotification('Backend URL is not set. Please configure it in settings.', 'error')
+            return
+        }
+
         loading.value = true
         error.value = null
         emit('update:loading', true)
@@ -135,10 +144,16 @@ const fetchJobs = async () => {
         )
         jobs.value = response.data.results
         emit('update:jobs', response.data.results)
+        if (response.data.results.length === 0) {
+            showNotification('No job applications found matching your criteria.', 'warning')
+        } else {
+            showNotification(`Found ${response.data.results.length} job applications.`, 'success')
+        }
     } catch (err) {
         console.error('Failed to fetch filtered job applications:', JSON.stringify(err))
         error.value = 'Failed to load job applications.'
         emit('update:error', 'Failed to load job applications.')
+        showNotification('Failed to load job applications.', 'error')
     } finally {
         loading.value = false
         emit('update:loading', false)
@@ -156,6 +171,7 @@ const resetFilters = () => {
     query.sort_order = undefined
     query.limit = 10
     query.page = 1
+    showNotification('Filters have been reset.', 'success')
 }
 
 // Initialize with an empty filter if none exists
@@ -243,13 +259,9 @@ defineExpose({jobs, loading, error, fetchJobs})
         {{ loading ? 'Searching...' : 'Search' }}
       </button>
     </div>
-
-    <!-- Error message -->
-    <div v-if="error" class="mt-4 p-3 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded-md">
-      {{ error }}
-    </div>
   </div>
 </template>
+
 
 <style scoped>
 input[type="number"]::-webkit-inner-spin-button,

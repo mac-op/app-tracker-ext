@@ -7,6 +7,7 @@ import {capturedFiles} from "~/sidepanel/file";
 import axios from "axios";
 import {onUnmounted} from "vue";
 import browser from 'webextension-polyfill'
+import NotificationPopup from '~/components/NotificationPopup.vue'
 
 const showSettings = ref(false)
 const toggleSettings = () => showSettings.value = !showSettings.value
@@ -19,24 +20,12 @@ const notification = ref({
     type: 'success'
 })
 
-const getNotificationClass = () => {
-    return {
-        success: 'bg-green-100 text-green-800 border-l-4 border-green-500',
-        error: 'bg-red-100 text-red-800 border-l-4 border-red-500',
-        warning: 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-500'
-    }[notification.value.type]
-}
-
 const showNotification = (message: string, type = 'success') => {
     notification.value = {
         show: true,
         message,
         type
     }
-
-    setTimeout(() => {
-        notification.value.show = false
-    }, 3000)
 }
 
 function getFileUrl(file: File): string {
@@ -76,26 +65,6 @@ const clearJob = () => {
     }
 }
 
-// const validateJob = () => {
-//     if (!job.value.title) {
-//         showNotification('Title is required', 'error')
-//         return false
-//     }
-//     if (!job.value.company) {
-//         showNotification('Company is required', 'error')
-//         return false
-//     }
-//     if (!job.value.description) {
-//         showNotification('Description is required', 'error')
-//         return false
-//     }
-//     if (!job.value.url) {
-//         showNotification('URL is required', 'error')
-//         return false
-//     }
-//     return true
-// }
-
 async function parsePage() {
     if (isParsing.value) return
     isParsing.value = true
@@ -114,11 +83,6 @@ async function parsePage() {
             showNotification('Unexpected result format', 'error')
             return
         }
-
-        // if (!validateJob()) {
-        //     isParsing.value = false
-        //     return
-        // }
 
         console.log('Parsed posting:', result)
         job.value = {
@@ -195,16 +159,11 @@ async function saveJob() {
 
 <template>
   <main class="w-full h-full px-4 py-5 text-gray-700">
-    <div
-      v-show="notification.show"
-      class="fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded shadow-lg z-50 transition-linear duration-300 ease-in-out"
-      :class="[
-          getNotificationClass(),
-          notification.show ? 'opacity-100' : 'opacity-0'
-        ]"
-    >
-      {{ notification.message }}
-    </div>
+    <NotificationPopup
+      v-model:show="notification.show"
+      :message="notification.message"
+      :type="notification.type as ('warning' | 'error' | undefined | 'success')"
+    />
 
     <template v-if="!showSettings">
       <div class="flex justify-between items-center w-full mb-4">
