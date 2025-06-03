@@ -146,12 +146,7 @@ their own subgroups and filters. \
                 "source": "",
                 "reposted": false,
                 "date_applied": "2023-06-02T00:00:36.917Z",
-                "files": [
-                    {
-                        "name": "file.txt",
-                        "link": "https://example.com/file.txt"
-                    }
-                ]
+                "files": ["file.txt"]
             }
         ]
     }
