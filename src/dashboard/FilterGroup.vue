@@ -134,6 +134,7 @@ const toggleOperator = () => emit('toggle-operator', props.group);
       <Dropdown
         v-model="filter.field"
         :options="fieldOptions"
+        placeholder="Select field"
         class="max-w-md"
       />
 

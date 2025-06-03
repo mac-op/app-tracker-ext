@@ -3,17 +3,16 @@ import {provide, ref} from 'vue';
 import JobApplicationDashboard from "~/dashboard/JobApplicationDashboard.vue";
 import QueryBuilder from "~/dashboard/QueryBuilder.vue";
 
-// Create refs to share between components
 const jobs = ref([]);
 const loading = ref(false);
 const error = ref(null);
 const fetchJobs = ref<(() => {}) | null>(null);
 
-// Provide these values to child components
+// Provide child components
 provide('jobs', jobs);
 provide('loading', loading);
 provide('error', error);
-provide('fetchJobs', fetchJobs); // Add this line
+provide('fetchJobs', fetchJobs);
 </script>
 
 <template>

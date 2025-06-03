@@ -67,7 +67,6 @@ const selectJob = (jobId: string) => {
     selectedJobId.value = jobId
 }
 
-// Get the currently selected job
 const selectedJob = computed<JobAppResponse | null>(() => {
     if (!selectedJobId.value) return null
     return jobs.value.find(job => job.id === selectedJobId.value) || null
@@ -85,27 +84,22 @@ const daysSinceApplied = computed(() => {
     return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`
 })
 
-// Function to handle file preview
 const handleFilePreview = async (appId: string, fileName: string) => {
     try {
         previewLoading.value = true
         // Fetch the file from the backend
-        const response = await axios.get(`${storedSettings.value.backendUrl}/files/${appId}/${fileName}`)
+        const response = await axios.get<{
+            url: string
+        }>(`${storedSettings.value.backendUrl}/files/${appId}/${fileName}`)
 
         if (response.data && response.data.url) {
-            // Fetch the actual file from the provided URL
             const fileResponse = await fetch(response.data.url)
-
             if (!fileResponse.ok)
                 error.value = `Failed to fetch file: ${fileResponse.statusText}`
 
-            // Get the file blob
             const blob = await fileResponse.blob()
-
-            // Create a File object from the blob
             const file = new File([blob], fileName, {type: blob.type})
 
-            // Open the file preview
             openFilePreview(file)
         } else {
             error.value = 'Invalid response format from server'

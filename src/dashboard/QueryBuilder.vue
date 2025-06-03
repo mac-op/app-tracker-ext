@@ -3,7 +3,7 @@ import {ref, reactive} from 'vue'
 import axios from 'axios'
 import {storedSettings} from "~/logic"
 import {JobAppResponse} from "~/dashboard/JobApplicationDashboard.vue"
-import FilterGroup from "~/dashboard/FilterGroup.vue" // Import the new component
+import FilterGroup from "~/dashboard/FilterGroup.vue"
 
 interface Filter {
     field: string
@@ -69,8 +69,8 @@ const emit = defineEmits(['update:jobs', 'update:loading', 'update:error', 'upda
 
 const addFilter = (group: FilterGroup) => {
     group.filters.push({
-        field: fieldOptions[0].value,
-        operator: operatorOptions[0].value,
+        field: '',
+        operator: '',
         value: ''
     })
 }
@@ -100,12 +100,10 @@ const removeSubgroup = (group: FilterGroup, index: number) => {
     group.subgroups.splice(index, 1)
 }
 
-// Toggle the operator of the specified group
 const toggleOperator = (group: FilterGroup) => {
     group.operator = group.operator === 'and' ? 'or' : 'and'
 }
 
-// Function to fetch filtered jobs
 const fetchJobs = async () => {
     try {
         loading.value = true
@@ -114,7 +112,7 @@ const fetchJobs = async () => {
         emit('update:error', null)
 
         const cleanGroup = (group: FilterGroup): FilterGroup => {
-            group.filters = group.filters.filter(f => f.value !== '')
+            group.filters = group.filters.filter(f => f.value !== '' && f.field)
                 .map(f => {
                     if (f.operator === 'is_empty' || f.operator === 'is_not_empty') {
                         return {
@@ -130,9 +128,7 @@ const fetchJobs = async () => {
                 .filter(sg => sg.filters.length > 0 || sg.subgroups.length > 0)
             return group
         }
-
         query.where = cleanGroup(query.where)
-
         const response = await axios.post<{ results: JobAppResponse[] }>(
             `${storedSettings.value.backendUrl}/applications`,
             query
@@ -140,16 +136,15 @@ const fetchJobs = async () => {
         jobs.value = response.data.results
         emit('update:jobs', response.data.results)
     } catch (err) {
-        console.error('Failed to fetch filtered job applications:', err)
-        error.value = 'Failed to load job applications. Please try again later.'
-        emit('update:error', 'Failed to load job applications. Please try again later.')
+        console.error('Failed to fetch filtered job applications:', JSON.stringify(err))
+        error.value = 'Failed to load job applications.'
+        emit('update:error', 'Failed to load job applications.')
     } finally {
         loading.value = false
         emit('update:loading', false)
     }
 }
 
-// Reset all filters
 const resetFilters = () => {
     query.where.filters = [{
         field: fieldOptions[0].value,
