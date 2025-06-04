@@ -11,15 +11,11 @@ import {
 } from '~/logic/filePreviewStore'
 import {storedSettings} from "~/logic";
 import type {JobAppResponse} from "~/dashboard/Dashboard.vue";
+import {showNotification} from "~/composables/useNotification";
 
 // Use inject to get data from parent Dashboard component
 const jobs = inject<Ref<JobAppResponse[]>>('jobs', ref([]));
 const loading = inject('loading', ref(false));
-// const error = inject('error', ref(null));
-const showNotification = inject('showNotification',
-    (message: string, _ = 'error') => {
-        console.error('showNotification not provided', message);
-    });
 
 const selectedJobId = ref<string | null>(null);
 const previewLoading = ref(false);

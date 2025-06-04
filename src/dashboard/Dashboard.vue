@@ -2,9 +2,10 @@
 import {provide, ref} from 'vue';
 import JobList from "~/dashboard/JobList.vue";
 import QueryBuilder from "~/dashboard/QueryBuilder.vue";
-import NotificationPopup from '~/components/NotificationPopup.vue';
+import NotificationPopup from "~/components/NotificationPopup.vue";
 import axios from 'axios';
 import {settingsLoaded, storedSettings} from "~/logic";
+import {showNotification} from "~/composables/useNotification";
 
 export interface JobAppResponse {
     id: string
@@ -25,11 +26,6 @@ export interface JobAppResponse {
 const jobs = ref<JobAppResponse[]>([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
-const notification = ref({
-    show: false,
-    message: '',
-    type: 'success'
-});
 
 // Define query types
 export interface Filter {
@@ -67,20 +63,6 @@ const query = ref<Query>({
     page: 1
 });
 
-// Show notification function
-const showNotification = (message: string, type = 'error') => {
-    notification.value = {
-        show: true,
-        message,
-        type
-    };
-};
-
-watch(settingsLoaded, (isLoaded) => {
-    if (isLoaded) {
-        fetchJobs(query.value);
-    }
-}, {immediate: true});
 
 // Fetch jobs function that will be passed to QueryBuilder
 const fetchJobs = async (updatedQuery: Query) => {
@@ -145,6 +127,13 @@ const fetchJobs = async (updatedQuery: Query) => {
     }
 };
 
+watch(settingsLoaded, (isLoaded) => {
+    if (isLoaded) {
+        fetchJobs(query.value);
+    }
+}, {immediate: true});
+
+
 // Provide shared state to child components
 provide('jobs', jobs);
 provide('loading', loading);
@@ -156,12 +145,13 @@ provide('query', query);
 
 <template>
   <main class="px-4 py-10 text-gray-700 dark:text-gray-200">
-    <NotificationPopup
-      v-model:show="notification.show"
-      :message="notification.message"
-      :type="notification.type as ('warning' | 'error' | undefined | 'success')"
-      :duration="5000"
-    />
+    <!--    <NotificationPopup-->
+    <!--      v-model:show="notification.show"-->
+    <!--      :message="notification.message"-->
+    <!--      :type="notification.type as ('warning' | 'error' | undefined | 'success')"-->
+    <!--      :duration="5000"-->
+    <!--    />-->
+    <NotificationPopup ref="notification"/>
 
     <QueryBuilder
       :query="query"

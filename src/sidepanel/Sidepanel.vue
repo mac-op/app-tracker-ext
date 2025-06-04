@@ -8,25 +8,13 @@ import axios from "axios";
 import {onUnmounted} from "vue";
 import browser from 'webextension-polyfill'
 import NotificationPopup from '~/components/NotificationPopup.vue'
+import {showNotification} from "~/composables/useNotification";
 
 const showSettings = ref(false)
 const toggleSettings = () => showSettings.value = !showSettings.value
 
 const isSaving = ref(false)
 const isParsing = ref(false)
-const notification = ref({
-    show: false,
-    message: '',
-    type: 'success'
-})
-
-const showNotification = (message: string, type = 'success') => {
-    notification.value = {
-        show: true,
-        message,
-        type
-    }
-}
 
 function getFileUrl(file: File): string {
     return URL.createObjectURL(file);
@@ -128,6 +116,13 @@ async function saveJob() {
         num_files: capturedFiles.length
     };
 
+    if (!applicationData.title || !applicationData.description || !applicationData.company) {
+        console.error('Missing required fields in application data', applicationData);
+        showNotification('Please fill in all required fields', 'error');
+        isSaving.value = false;
+        return;
+    }
+
     formData.append('application', JSON.stringify(applicationData));
 
     capturedFiles.forEach((file) => {
@@ -159,11 +154,7 @@ async function saveJob() {
 
 <template>
   <main class="w-full h-full px-4 py-5 text-gray-700">
-    <NotificationPopup
-      v-model:show="notification.show"
-      :message="notification.message"
-      :type="notification.type as ('warning' | 'error' | undefined | 'success')"
-    />
+    <NotificationPopup/>
 
     <template v-if="!showSettings">
       <div class="flex justify-between items-center w-full mb-4">

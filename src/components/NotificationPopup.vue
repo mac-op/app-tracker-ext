@@ -1,60 +1,48 @@
 <script setup lang="ts">
-import {ref, watch} from 'vue';
+import {notificationService} from '~/composables/useNotification';
 
-interface Props {
-    show: boolean;
-    message: string;
-    type?: 'success' | 'error' | 'warning';
-    duration?: number;
-    position?: 'top' | 'bottom';
-}
-
-const props = withDefaults(defineProps<Props>(), {
-    type: 'success',
-    duration: 3000,
-    position: 'top'
-});
-
-const emit = defineEmits(['update:show']);
-
-const isVisible = ref(props.show);
-
-watch(() => props.show, (newValue) => {
-    isVisible.value = newValue;
-    if (newValue && props.duration > 0) {
-        setTimeout(() => {
-            isVisible.value = false;
-            emit('update:show', false);
-        }, props.duration);
-    }
-});
-
-const getNotificationClass = () => {
-    const baseClasses = 'fixed left-1/2 transform -translate-x-1/2 pl-6 pr-4 py-3 rounded shadow-lg z-50 transition-linear duration-300 ease-in-out items-center flex-col';
-    const positionClass = props.position === 'top' ? 'top-4' : 'bottom-4';
-
+// Helper function to get notification class based on type
+const getNotificationClass = (type: string) => {
     const typeClasses = {
         success: 'bg-green-100 text-green-800 border-l-4 border-green-500',
         error: 'bg-red-100 text-red-800 border-l-4 border-red-500',
         warning: 'bg-yellow-100 text-yellow-800 border-l-4 border-yellow-500'
-    }[props.type];
+    };
 
-    return `${baseClasses} ${positionClass} ${typeClasses} ${isVisible.value ? 'opacity-100' : 'opacity-0'}`;
+    return typeClasses[type as keyof typeof typeClasses] || typeClasses.success;
 };
 </script>
 
 <template>
-  <div
-    v-show="isVisible"
-    :class="getNotificationClass()"
-  >
-    <div class="flex justify-between items-center w-full">
-      <div>
-        <slot>{{ message }}</slot>
+  <div class="fixed left-1/2 transform -translate-x-1/2 top-4 z-50 flex flex-col gap-2">
+    <transition-group name="notification">
+      <div
+        v-for="notification in notificationService.notifications.value"
+        :key="notification.id"
+        :class="['pl-6 pr-4 py-3 rounded shadow-lg flex items-center justify-between', getNotificationClass(notification.type)]"
+      >
+        <div>{{ notification.message }}</div>
+        <button class="ml-3 flex-shrink-0" @click="() => notificationService.remove(notification.id)">
+          <carbon-close/>
+        </button>
       </div>
-      <button class="ml-3 flex-shrink-0" @click="() => emit('update:show', false)">
-        <carbon-close/>
-      </button>
-    </div>
+    </transition-group>
   </div>
 </template>
+
+<style scoped>
+.notification-enter-active,
+.notification-leave-active {
+    transition: all 0.3s ease;
+}
+
+.notification-enter-from {
+    opacity: 0;
+    transform: translateY(-15px) translateX(-50%);
+}
+
+.notification-leave-to {
+    opacity: 0;
+    transform: translateY(-15px) translateX(-50%);
+}
+</style>
