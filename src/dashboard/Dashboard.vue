@@ -75,7 +75,7 @@ const fetchJobs = async (updatedQuery: Query) => {
 
         const cleanGroup = (group: FilterGroup): FilterGroup => {
             group.filters = group.filters
-                .filter(f => f.value !== '' && f.field)
+                .filter(f => f.operator === 'is_empty' || f.operator === 'is_not_empty' || (f.value !== '' && f.field))
             group.subgroups = group.subgroups
                 .map(sg => cleanGroup(sg))
                 .filter(sg => sg.filters.length > 0 || sg.subgroups.length > 0);
