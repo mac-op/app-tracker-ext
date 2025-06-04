@@ -2,7 +2,7 @@
 
 ---------------------------
 Web extension created with Vue and Vite, from
-the [Web Extension Template](https://github.com/anthttps://github.com/antfu-collective/vitesse-webext)
+the [Web Extension Template](https://github.com/antfu-collective/vitesse-webext)
 by [antfu](https://github.com/antfu).
 
 This extension works by opening a side panel in the browser, where job posting details can be filled out manually or
