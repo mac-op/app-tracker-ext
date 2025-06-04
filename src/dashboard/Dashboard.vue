@@ -25,7 +25,6 @@ export interface JobAppResponse {
 // Central state management
 const jobs = ref<JobAppResponse[]>([]);
 const loading = ref(false);
-const error = ref<string | null>(null);
 
 // Define query types
 export interface Filter {
@@ -73,20 +72,10 @@ const fetchJobs = async (updatedQuery: Query) => {
         }
 
         loading.value = true;
-        error.value = null;
 
         const cleanGroup = (group: FilterGroup): FilterGroup => {
-            group.filters = group.filters.filter(f => f.value !== '' && f.field)
-                .map(f => {
-                    if (f.operator === 'is_empty' || f.operator === 'is_not_empty') {
-                        return {
-                            field: f.field,
-                            operator: f.operator === 'is_empty' ? '=' : '!=',
-                            value: 'NULL'
-                        }
-                    }
-                    return f
-                });
+            group.filters = group.filters
+                .filter(f => f.value !== '' && f.field)
             group.subgroups = group.subgroups
                 .map(sg => cleanGroup(sg))
                 .filter(sg => sg.filters.length > 0 || sg.subgroups.length > 0);
@@ -113,14 +102,13 @@ const fetchJobs = async (updatedQuery: Query) => {
         );
 
         jobs.value = response.data.results ? response.data.results : [];
-        if (response.data.results.length === 0) {
+        if (jobs.value.length === 0) {
             showNotification('No job applications found matching your criteria.', 'warning');
         } else {
             showNotification(`Found ${response.data.results.length} job applications.`, 'success');
         }
     } catch (err) {
         console.error('Failed to fetch filtered job applications:', JSON.stringify(err));
-        error.value = 'Failed to load job applications.';
         showNotification('Failed to load job applications.', 'error');
     } finally {
         loading.value = false;
@@ -137,20 +125,12 @@ watch(settingsLoaded, (isLoaded) => {
 // Provide shared state to child components
 provide('jobs', jobs);
 provide('loading', loading);
-provide('error', error);
 provide('fetchJobs', fetchJobs);
-provide('showNotification', showNotification);
 provide('query', query);
 </script>
 
 <template>
   <main class="px-4 py-10 text-gray-700 dark:text-gray-200">
-    <!--    <NotificationPopup-->
-    <!--      v-model:show="notification.show"-->
-    <!--      :message="notification.message"-->
-    <!--      :type="notification.type as ('warning' | 'error' | undefined | 'success')"-->
-    <!--      :duration="5000"-->
-    <!--    />-->
     <NotificationPopup ref="notification"/>
 
     <QueryBuilder

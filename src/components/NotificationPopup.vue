@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {notificationService} from '~/composables/useNotification';
 
-// Helper function to get notification class based on type
 const getNotificationClass = (type: string) => {
     const typeClasses = {
         success: 'bg-green-100 text-green-800 border-l-4 border-green-500',
