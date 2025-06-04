@@ -1,16 +1,5 @@
 <script setup lang="ts">
-
-interface Filter {
-    field: string;
-    operator: string;
-    value: string | number | boolean;
-}
-
-interface FilterGroup {
-    filters: Filter[];
-    subgroups: FilterGroup[];
-    operator: 'and' | 'or';
-}
+import {Filter, FilterGroup} from "~/dashboard/Dashboard.vue";
 
 const props = defineProps({
     group: {
@@ -157,15 +146,15 @@ const toggleOperator = () => emit('toggle-operator', props.group);
     </div>
 
     <div v-for="(subgroup, subIndex) in group.subgroups" :key="`subgroup-${level}-${subIndex}`">
-      <FilterGroup
+      <FilterMenu
         :group="subgroup"
         :level="level + 1"
         :field-options="fieldOptions"
         :operator-options="operatorOptions"
         @add-filter="$emit('add-filter', $event)"
-        @remove-filter="(group, index) => $emit('remove-filter', group, index)"
+        @remove-filter="(group:Filter, index:number) => $emit('remove-filter', group, index)"
         @add-subgroup="$emit('add-subgroup', $event)"
-        @remove-subgroup="(nestedGroup, nestedIndex) => $emit('remove-subgroup', nestedGroup, nestedIndex)"
+        @remove-subgroup="(nestedGroup:FilterGroup, nestedIndex:number) => $emit('remove-subgroup', nestedGroup, nestedIndex)"
         @toggle-operator="$emit('toggle-operator', $event)"
         @remove-this-group="$emit('remove-subgroup', group, subIndex)"
       />

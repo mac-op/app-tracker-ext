@@ -1,30 +1,19 @@
 <script setup lang="ts">
-import {ref, reactive} from 'vue'
-import axios from 'axios'
-import {storedSettings} from "~/logic"
-import {JobAppResponse} from "~/dashboard/JobApplicationDashboard.vue"
-import FilterGroup from "~/dashboard/FilterGroup.vue"
+import {inject, ref, reactive} from 'vue'
+import {FilterGroup, Query} from "~/dashboard/Dashboard.vue"
+import FilterMenu from "~/dashboard/FilterMenu.vue";
 
-interface Filter {
-    field: string
-    operator: string
-    value: string | number | boolean
-}
+// Define props and emits
+const props = defineProps({
+    query: {
+        type: Object as () => Query,
+        required: true
+    }
+});
 
-interface FilterGroup {
-    filters: Filter[]
-    subgroups: FilterGroup[]
-    operator: 'and' | 'or'
-}
+const emit = defineEmits(['update:query', 'fetch']);
 
-interface Query {
-    where: FilterGroup
-    sort_by?: string
-    sort_order?: 'asc' | 'desc'
-    limit?: number
-    page?: number
-}
-
+// Field and operator options
 const fieldOptions = [
     {value: 'id', label: 'ID'},
     {value: 'title', label: 'Job Title'},
@@ -34,7 +23,7 @@ const fieldOptions = [
     {value: 'date_applied', label: 'Date Applied'},
     {value: 'date_posted', label: 'Date Posted'},
     {value: 'source', label: 'Source'}
-]
+];
 
 const operatorOptions = [
     {value: '=', label: 'Equals'},
@@ -47,53 +36,40 @@ const operatorOptions = [
     {value: '<=', label: 'Less Than or Equals'},
     {value: 'is_empty', label: 'Is Empty'},
     {value: 'is_not_empty', label: 'Is Not Empty'}
-]
+];
 
-// Initialize query state
-const query = reactive<Query>({
-    where: {
-        filters: [],
-        subgroups: [],
-        operator: 'and'
-    },
-    limit: 30,
-    page: 1
-})
+// Local reactive copy of the query
+const localQuery = reactive<Query>(JSON.parse(JSON.stringify(props.query)));
 
-const jobs = ref<JobAppResponse[] | null>([])
-const loading = ref(false)
-const error = ref<string | null>(null)
-const showNotification = inject('showNotification',
-    (message: string, _ = 'error') => {
-        console.error('showNotification not provided', message);
-    });
-
-// Emit events for parent components
-const emit = defineEmits(['update:jobs', 'update:loading', 'update:error', 'update:fetchJobs'])
+// Get the loading state from parent
+const loading = inject('loading', ref(false));
 
 const addFilter = (group: FilterGroup) => {
     group.filters.push({
         field: '',
-        operator: '',
+        operator: '=',
         value: ''
-    })
-}
+    });
+    emit('update:query', localQuery);
+};
 
 const removeFilter = (group: FilterGroup, index: number) => {
-    group.filters.splice(index, 1)
-}
+    group.filters.splice(index, 1);
+    emit('update:query', localQuery);
+};
 
 const addSubgroup = (group: FilterGroup) => {
     group.subgroups.push({
         filters: [{
             field: '',
-            operator: '',
+            operator: '=',
             value: ''
         }],
         subgroups: [],
         operator: 'and'
-    })
-}
+    });
+    emit('update:query', localQuery);
+};
 
 const removeSubgroup = (group: FilterGroup, index: number) => {
     if (!group || !group.subgroups) {
@@ -101,98 +77,47 @@ const removeSubgroup = (group: FilterGroup, index: number) => {
         return;
     }
 
-    group.subgroups.splice(index, 1)
-}
+    group.subgroups.splice(index, 1);
+    emit('update:query', localQuery);
+};
 
 const toggleOperator = (group: FilterGroup) => {
-    group.operator = group.operator === 'and' ? 'or' : 'and'
-}
-
-const fetchJobs = async () => {
-    try {
-        if (!storedSettings.value.backendUrl) {
-            showNotification('Backend URL is not set. Please configure it in settings.', 'error')
-            return
-        }
-
-        loading.value = true
-        error.value = null
-        emit('update:loading', true)
-        emit('update:error', null)
-
-        const cleanGroup = (group: FilterGroup): FilterGroup => {
-            group.filters = group.filters.filter(f => f.value !== '' && f.field)
-                .map(f => {
-                    if (f.operator === 'is_empty' || f.operator === 'is_not_empty') {
-                        return {
-                            field: f.field,
-                            operator: f.operator === 'is_empty' ? '=' : '!=',
-                            value: 'NULL'
-                        }
-                    }
-                    return f
-                })
-            group.subgroups = group.subgroups
-                .map(sg => cleanGroup(sg))
-                .filter(sg => sg.filters.length > 0 || sg.subgroups.length > 0)
-            return group
-        }
-        query.where = cleanGroup(query.where)
-        const response = await axios.post<{ results: JobAppResponse[] }>(
-            `${storedSettings.value.backendUrl}/applications`,
-            query
-        )
-        jobs.value = response.data.results
-        emit('update:jobs', response.data.results)
-        if (response.data.results.length === 0) {
-            showNotification('No job applications found matching your criteria.', 'warning')
-        } else {
-            showNotification(`Found ${response.data.results.length} job applications.`, 'success')
-        }
-    } catch (err) {
-        console.error('Failed to fetch filtered job applications:', JSON.stringify(err))
-        error.value = 'Failed to load job applications.'
-        emit('update:error', 'Failed to load job applications.')
-        showNotification('Failed to load job applications.', 'error')
-    } finally {
-        loading.value = false
-        emit('update:loading', false)
-    }
-}
+    group.operator = group.operator === 'and' ? 'or' : 'and';
+    emit('update:query', localQuery);
+};
 
 const resetFilters = () => {
-    query.where.filters = [{
+    localQuery.where.filters = [{
         field: fieldOptions[0].value,
         operator: operatorOptions[0].value,
         value: ''
-    }]
-    query.where.subgroups = []
-    query.sort_by = undefined
-    query.sort_order = undefined
-    query.limit = 10
-    query.page = 1
-    showNotification('Filters have been reset.', 'success')
-}
+    }];
+    localQuery.where.subgroups = [];
+    localQuery.sort_by = undefined;
+    localQuery.sort_order = undefined;
+    localQuery.limit = 10;
+    localQuery.page = 1;
+
+    emit('update:query', localQuery);
+};
 
 // Initialize with an empty filter if none exists
-if (query.where.filters.length === 0) {
-    addFilter(query.where)
+if (localQuery.where.filters.length === 0) {
+    addFilter(localQuery.where);
 }
 
-// Expose the fetchJobs function
-emit('update:fetchJobs', fetchJobs)
-
-// Make available to parent components
-defineExpose({jobs, loading, error, fetchJobs})
+const handleSearch = () => {
+    emit('fetch', localQuery);
+};
 </script>
 
 <template>
   <div class="max-w-100pc mx-auto mb-6 border rounded-md p-4 bg-white dark:bg-gray-900">
     <h2 class="text-xl font-bold mb-4">Filter Applications</h2>
 
-    <!-- Use the recursive FilterGroup component -->
-    <FilterGroup
-      :group="query.where"
+    <!-- Use the recursive FilterMenu component -->
+    <FilterMenu
+      :group="localQuery.where"
       :level="0"
       :field-options="fieldOptions"
       :operator-options="operatorOptions"
@@ -208,19 +133,21 @@ defineExpose({jobs, loading, error, fetchJobs})
       <div class="sort-section flex flex-row items-center gap-4">
         <label class="text-sm font-medium whitespace-nowrap">Sort by:</label>
         <Dropdown
-          v-model="query.sort_by"
+          v-model="localQuery.sort_by"
           :options="fieldOptions"
           placeholder="Select"
           class="ml-3 min-w-sm"
+          @update:modelValue="emit('update:query', localQuery)"
         />
 
         <Dropdown
-          v-model="query.sort_order"
-          :disabled="!query.sort_by"
+          v-model="localQuery.sort_order"
+          :disabled="!localQuery.sort_by"
           :options="[
               {value: 'asc', label: 'Ascending'},
               {value: 'desc', label: 'Descending'}
           ]"
+          @update:modelValue="emit('update:query', localQuery)"
         >
         </Dropdown>
       </div>
@@ -228,15 +155,17 @@ defineExpose({jobs, loading, error, fetchJobs})
       <div class="pagination-section flex items-center gap-2 ml-10">
         <label class="text-sm font-medium">Limit:</label>
         <input
-          v-model="query.limit"
+          v-model="localQuery.limit"
           class="box"
+          @input="emit('update:query', localQuery)"
         />
 
         <label class="text-sm font-medium ml-2">Page:</label>
         <input
-          v-model.number="query.page"
+          v-model.number="localQuery.page"
           min="1"
           class="box max-w-15 pr-0"
+          @input="emit('update:query', localQuery)"
         />
       </div>
     </div>
@@ -250,7 +179,7 @@ defineExpose({jobs, loading, error, fetchJobs})
       </button>
 
       <button
-        @click="fetchJobs"
+        @click="handleSearch"
         class="px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-md flex items-center"
         :disabled="loading"
       >
@@ -261,7 +190,6 @@ defineExpose({jobs, loading, error, fetchJobs})
     </div>
   </div>
 </template>
-
 
 <style scoped>
 input[type="number"]::-webkit-inner-spin-button,

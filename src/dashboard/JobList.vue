@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, onMounted, computed, inject, watch} from 'vue'
+import {ref, computed, inject} from 'vue'
 import FilePreviewModal from '~/components/FilePreviewModal.vue'
 import axios from "axios"
 import {
@@ -10,126 +10,84 @@ import {
     openCurrentFileInNewTab
 } from '~/logic/filePreviewStore'
 import {storedSettings} from "~/logic";
+import type {JobAppResponse} from "~/dashboard/Dashboard.vue";
 
-export interface JobAppResponse {
-    id: string
-    title: string
-    company: string
-    location: string
-    description: string
-    url: string
-    date_applied: string
-    date_posted?: string
-    internal_id?: string
-    source?: string
-    reposted?: boolean
-    files?: string[]
-}
-
-const jobs = ref<JobAppResponse[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
-const selectedJobId = ref<string | null>(null)
-const previewLoading = ref(false)
-
+// Use inject to get data from parent Dashboard component
+const jobs = inject<Ref<JobAppResponse[]>>('jobs', ref([]));
+const loading = inject('loading', ref(false));
+// const error = inject('error', ref(null));
 const showNotification = inject('showNotification',
     (message: string, _ = 'error') => {
         console.error('showNotification not provided', message);
     });
 
-const queryBuilderJobs = inject('jobs', ref([]))
-const queryBuilderLoading = inject('loading', ref(false))
-const queryBuilderError = inject('error', ref(null))
-const queryBuilderFetchJobs = inject<Ref<() => {}> | null>('fetchJobs', null)
-
-// Watch for updates from QueryBuilder
-watch([queryBuilderJobs, queryBuilderLoading, queryBuilderError],
-    ([newJobs, newLoading, newError]) => {
-        if (newJobs === null)
-            jobs.value = []
-        else if (newJobs !== undefined)
-            jobs.value = newJobs
-        loading.value = newLoading
-        error.value = newError
-
-        // Show notification if there's an error
-        if (newError) {
-            showNotification(newError, 'error')
-        }
-    },
-    {immediate: true}
-)
+const selectedJobId = ref<string | null>(null);
+const previewLoading = ref(false);
 
 const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     if (date.toString() === 'Invalid Date') {
-        return dateString
+        return dateString;
     }
     return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
-    })
-}
+    });
+};
 
 const selectJob = (jobId: string) => {
-    console.log('Selected job:', jobId)
-    selectedJobId.value = jobId
-}
+    console.log('Selected job:', jobId);
+    selectedJobId.value = jobId;
+};
 
 const selectedJob = computed<JobAppResponse | null>(() => {
-    if (!selectedJobId.value) return null
-    return jobs.value.find(job => job.id === selectedJobId.value) || null
-})
+    if (!selectedJobId.value) return null;
+    return jobs.value.find(job => job.id === selectedJobId.value) || null;
+});
 
 // Days since application was submitted
 const daysSinceApplied = computed(() => {
-    if (!selectedJob.value) return ''
+    if (!selectedJob.value) return '';
 
-    const appliedDate = new Date(selectedJob.value.date_applied)
-    const today = new Date()
-    const diffTime = Math.abs(today.getTime() - appliedDate.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const appliedDate = new Date(selectedJob.value.date_applied);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - appliedDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`
-})
+    return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+});
 
 const handleFilePreview = async (appId: string, fileName: string) => {
     try {
-        previewLoading.value = true
+        previewLoading.value = true;
         // Fetch the file from the backend
         const response = await axios.get<{
             url: string
-        }>(`${storedSettings.value.backendUrl}/files/${appId}/${fileName}`)
+        }>(`${storedSettings.value.backendUrl}/files/${appId}/${fileName}`);
 
         if (response.data && response.data.url) {
-            const fileResponse = await fetch(response.data.url)
+            const fileResponse = await fetch(response.data.url);
             if (!fileResponse.ok) {
-                showNotification(`Failed to fetch file: ${fileResponse.statusText}`, 'error')
-                return
+                showNotification(`Failed to fetch file: ${fileResponse.statusText}`, 'error');
+                return;
             }
 
-            const blob = await fileResponse.blob()
-            const file = new File([blob], fileName, {type: blob.type})
+            const blob = await fileResponse.blob();
+            const file = new File([blob], fileName, {type: blob.type});
 
-            openFilePreview(file)
+            openFilePreview(file);
         } else {
-            showNotification('Invalid response format from server', 'error')
+            showNotification('Invalid response format from server', 'error');
         }
     } catch (err) {
-        console.error('Error fetching file:', err)
-        showNotification(`Failed to load file preview: ${(err as Error).message}`, 'error')
+        console.error('Error fetching file:', err);
+        showNotification(`Failed to load file preview: ${(err as Error).message}`, 'error');
     } finally {
-        previewLoading.value = false
+        previewLoading.value = false;
     }
-}
+};
 
-onMounted(() => {
-    if (!queryBuilderFetchJobs) return
-    if (queryBuilderJobs.value?.length === 0 && queryBuilderFetchJobs.value) {
-        (queryBuilderFetchJobs.value)()
-    }
-})
 </script>
 
 <template>
@@ -170,9 +128,9 @@ onMounted(() => {
                 <div class="text-xs text-gray-500">
                   Applied: {{ formatDate(job.date_applied) }}
                 </div>
-                <div v-if="job.source" class="source text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">
-                  {{ job.source }}
-                </div>
+                <!--                <div v-if="job.source" class="source text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">-->
+                <!--                  {{ job.source }}-->
+                <!--                </div>-->
               </div>
             </div>
           </template>

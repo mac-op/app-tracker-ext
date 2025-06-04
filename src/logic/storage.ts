@@ -54,4 +54,9 @@ const settingsDefault = ref<UserSettings>({
     backendUrl: '',
 })
 
-export const storedSettings = useWebExtensionStorage<UserSettings>('settings', settingsDefault)
+const {
+    data: storedSettings,
+    isLoaded: settingsLoaded
+} = useWebExtensionStorage<UserSettings>('settings', settingsDefault)
+
+export {storedSettings, settingsLoaded}
