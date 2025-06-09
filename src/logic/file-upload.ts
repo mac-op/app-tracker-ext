@@ -1,7 +1,6 @@
-export enum FileAction {
-    UPLOAD = 'upload',
-    SAVE = 'save',
-    GET = 'get',
+export enum MessageAction {
+    UPLOAD_FILE ,
+    WORKDAY_URL ,
 }
 
 export interface FileData {
@@ -13,8 +12,9 @@ export interface FileData {
     fileId?: string,
 }
 
-export interface FileMessage {
-    action: FileAction,
-    target: 'sidepanel' | 'background',
-    data: FileData
+export interface Message {
+    action: MessageAction,
+    target: 'sidepanel' | 'background' | 'content-script',
+    file: FileData,
+    url: string
 }

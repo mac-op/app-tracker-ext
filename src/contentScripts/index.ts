@@ -1,5 +1,5 @@
 import browser from "webextension-polyfill";
-import {FileAction} from "~/logic/file-upload";
+import {Message, MessageAction} from "~/logic/file-upload";
 
 async function handleFileCapture(files: File[]) {
     try {
@@ -8,7 +8,7 @@ async function handleFileCapture(files: File[]) {
 
             reader.onload = () => {
                 browser.runtime.sendMessage({
-                    action: FileAction.UPLOAD,
+                    action: MessageAction.UPLOAD_FILE,
                     target: 'sidepanel',
                     data: {
                         name: file.name,
@@ -54,3 +54,17 @@ document.addEventListener('drop', (event) => {
     }
 }, true);
 
+browser.runtime.onMessage.addListener((message: any) => {
+    const msg = message as Message;
+    if (msg.target === 'content-script' && msg.action === MessageAction.WORKDAY_URL) {
+        console.log(`Content script received URL: ${msg.url}`);
+        const elem = document.createElement('p');
+        elem.style.position = 'fixed';
+        elem.style.top = '0';
+        elem.style.fontSize = '20px';
+        elem.style.backgroundColor = 'red';
+        elem.innerText = msg.url;
+        document.body.appendChild(elem);
+    }
+    return Promise.resolve();
+})
