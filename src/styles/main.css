@@ -26,7 +26,7 @@ body,
     hover:border-teal-500 focus:border-teal-500
     focus:ring-1 focus:ring-teal-500 focus:outline-none;
     position: relative;
-    padding-right: 2.5rem;
+    padding-right: 1rem;
     appearance: none;
 }
 

@@ -87,7 +87,7 @@ const handleFilePreview = async (appId: string, fileName: string) => {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col max-w-100pc mx-auto">
+  <div class="flex flex-col max-w-100pc mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow items-stretch">
       <!-- Left Panel: Job List -->
       <div class="job-list md:col-span-1 border rounded-md overflow-hidden h-full flex flex-col">
@@ -95,7 +95,7 @@ const handleFilePreview = async (appId: string, fileName: string) => {
           <h2 class="font-semibold">Applications ({{ jobs.length || 0 }})</h2>
         </div>
 
-        <div class="job-items overflow-y-auto max-h-[70vh]">
+        <div class="job-items overflow-y-auto max-h-[65vh]">
           <!-- Loading indicator inside job list -->
           <div v-if="loading" class="p-4 text-center text-gray-500">
             <div
@@ -133,7 +133,7 @@ const handleFilePreview = async (appId: string, fileName: string) => {
         </div>
       </div>
 
-      <div class="job-details md:col-span-2 border rounded-md">
+      <div class="job-details md:col-span-2 border rounded-md max-h-[70vh]">
         <div v-if="selectedJob" class="h-full flex flex-col">
           <!-- Job Header -->
           <div class="job-header p-4 border-b">

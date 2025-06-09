@@ -15,6 +15,6 @@ export interface FileData {
 export interface Message {
     action: MessageAction,
     target: 'sidepanel' | 'background' | 'content-script',
-    file: FileData,
-    url: string
+    file?: FileData,
+    url?: string
 }

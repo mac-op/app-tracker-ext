@@ -7,10 +7,10 @@ async function handleFileCapture(files: File[]) {
             const reader = new FileReader();
 
             reader.onload = () => {
-                browser.runtime.sendMessage({
+                browser.runtime.sendMessage<Message>({
                     action: MessageAction.UPLOAD_FILE,
                     target: 'sidepanel',
-                    data: {
+                    file: {
                         name: file.name,
                         size: file.size,
                         type: file.type,
@@ -63,7 +63,7 @@ browser.runtime.onMessage.addListener((message: any) => {
         elem.style.top = '0';
         elem.style.fontSize = '20px';
         elem.style.backgroundColor = 'red';
-        elem.innerText = msg.url;
+        elem.innerText = msg.url || 'No URL received.';
         document.body.appendChild(elem);
     }
     return Promise.resolve();

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import browser from "webextension-polyfill";
-import {MessageAction} from "~/logic/file-upload";
+import {Message, MessageAction} from "~/logic/file-upload";
 if (import.meta.hot) {
     // @ts-expect-error for background HMR
     import('/@vite/client')
@@ -24,14 +24,14 @@ browser.runtime.onMessage.addListener(async (message) => {
 const workdayURLs: Record<number, string> = {};
 
 browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-    const url = tab.url;
+    const url = tab.url || "";
 
     if (tab.url.includes('myworkdayjobs')) {
         workdayURLs[tabId] = url;
         return;
     }
     if (tab.status === 'complete' && url.includes("community.workday.com/maintenance-page")) {
-        browser.tabs.sendMessage(tabId, {
+        browser.tabs.sendMessage<Message, void>(tabId, {
             target:'content-script',
             action: MessageAction.WORKDAY_URL,
             url: workdayURLs[tabId] || '',

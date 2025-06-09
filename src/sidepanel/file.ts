@@ -8,6 +8,9 @@ const capturedFiles = reactive<File[]>([]);
 browser.runtime.onMessage.addListener((message: any) => {
     const msg = message as Message;
     if (msg.target === 'sidepanel' && msg.action === MessageAction.UPLOAD_FILE) {
+        if (!msg.file) {
+            return Promise.reject("No file received.");
+        }
         try {
             // Convert data URL back to File object
             const dataURL = msg.file.content as string;
