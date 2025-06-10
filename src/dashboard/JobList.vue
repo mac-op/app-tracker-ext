@@ -152,17 +152,14 @@ const handleFilePreview = async (appId: string, fileName: string) => {
           <div class="job-content p-4 overflow-y-auto flex-grow">
             <!-- Source & Links Section -->
             <div class="mb-6 flex flex-wrap gap-2">
-              <div v-if="selectedJob.source" class="source px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                {{ selectedJob.source }}
-              </div>
               <a
                 v-if="selectedJob.url"
                 :href="selectedJob.url"
                 target="_blank"
-                class="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-full text-sm inline-flex items-center"
+                class="text-blue-600 hover:underline items-center"
               >
                 <span class="i-carbon-launch mr-1"></span>
-                View Original Posting
+                {{selectedJob.url}}
               </a>
             </div>
 

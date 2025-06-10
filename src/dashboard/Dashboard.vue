@@ -58,7 +58,7 @@ const query = ref<Query>({
         subgroups: [],
         operator: 'and'
     },
-    limit: 30,
+    limit: 50,
     page: 1
 });
 
@@ -125,7 +125,6 @@ watch(settingsLoaded, (isLoaded) => {
 // Provide shared state to child components
 provide('jobs', jobs);
 provide('loading', loading);
-provide('fetchJobs', fetchJobs);
 provide('query', query);
 </script>
 

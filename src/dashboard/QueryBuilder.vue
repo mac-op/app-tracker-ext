@@ -39,7 +39,7 @@ const operatorOptions = [
 ];
 
 // Local reactive copy of the query
-const localQuery = reactive<Query>(JSON.parse(JSON.stringify(props.query)));
+const localQuery = reactive<Query>(props.query);
 
 // Get the loading state from parent
 const loading = inject('loading', ref(false));
@@ -95,7 +95,7 @@ const resetFilters = () => {
     localQuery.where.subgroups = [];
     localQuery.sort_by = undefined;
     localQuery.sort_order = undefined;
-    localQuery.limit = 10;
+    localQuery.limit = 50;
     localQuery.page = 1;
 
     emit('update:query', localQuery);
