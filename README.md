@@ -27,17 +27,17 @@ There is no plan to publish it to the Chrome Web Store or Firefox Add-ons.
 
 ## Backend Service
 
-The extension requires a backend service to store job postings and files. The base URL can be set in the setting menu.\
+The extension requires a backend to store job postings and files. The base URL can be set in the setting menu.\
 A basic implementation is provided [here](https://github.com/mac-op/job-tracker-backend), which uses Golang, AWS Lambda,
-S3 and DynamoDB. [This](https://github.com/mac-op/app-tracker-sheets) is another implementation with FastAPI that uses
+S3 and CockroachDB. [This](https://github.com/mac-op/app-tracker-sheets) is another implementation with FastAPI that uses
 Google Sheets and Google Drive as a datastore.
 
-Data fetched from the backend will populate the dashboard at the extension options page, where user can query and edit
+Data fetched from the backend will populate the dashboard at the extension options page, where one can query and edit
 past application details.
 
 ![img](./assets/dashboard.png)
 
-The backend service should implement the following endpoints:
+The backend should implement the following endpoints:
 
 ### `POST /job`
 
