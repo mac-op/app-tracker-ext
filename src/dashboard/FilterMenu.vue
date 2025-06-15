@@ -20,7 +20,15 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['add-filter', 'remove-filter', 'add-subgroup', 'remove-subgroup', 'toggle-operator', 'remove-this-group']);
+const emit = defineEmits([
+    'add-filter',
+    'remove-filter',
+    'add-subgroup',
+    'remove-subgroup',
+    'toggle-operator',
+    'remove-this-group',
+    'keydown-enter'
+]);
 
 const levelColors = [
     {
@@ -74,18 +82,18 @@ const getOperatorTextClass = () => {
         : colors.orText;
 };
 
-// Get the border color class
-// const getBorderColorClass = () => {
-//     const colors = getLevelColors();
-//     return colors.border;
-// };
-
 // Handler functions that emit events to parent
 const addFilter = () => emit('add-filter', props.group);
 const removeFilter = (index: number) => emit('remove-filter', props.group, index);
 const addSubgroup = () => emit('add-subgroup', props.group);
-// const removeSubgroup = (index: number) => emit('remove-subgroup', props.group, index);
 const toggleOperator = () => emit('toggle-operator', props.group);
+
+// Handler for Enter key press
+const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Enter') {
+        emit('keydown-enter');
+    }
+};
 </script>
 
 <template>
@@ -137,6 +145,7 @@ const toggleOperator = () => emit('toggle-operator', props.group);
         v-model="filter.value"
         :disabled="filter.operator === 'is_empty' || filter.operator === 'is_not_empty'"
         class="box w-full min-h-[40px] overflow-hidden"
+        @keydown="handleKeyDown"
       />
 
       <span class="icon-btn" @click="removeFilter(index)">
@@ -157,6 +166,7 @@ const toggleOperator = () => emit('toggle-operator', props.group);
         @remove-subgroup="(nestedGroup:FilterGroup, nestedIndex:number) => $emit('remove-subgroup', nestedGroup, nestedIndex)"
         @toggle-operator="$emit('toggle-operator', $event)"
         @remove-this-group="$emit('remove-subgroup', group, subIndex)"
+        @keydown-enter="$emit('keydown-enter')"
       />
     </div>
 

@@ -1,9 +1,9 @@
+
 <script setup lang="ts">
 import {inject, ref, reactive} from 'vue'
 import {FilterGroup, Query} from "~/dashboard/Dashboard.vue"
 import FilterMenu from "~/dashboard/FilterMenu.vue";
 
-// Define props and emits
 const props = defineProps({
     query: {
         type: Object as () => Query,
@@ -43,6 +43,27 @@ const localQuery = reactive<Query>(props.query);
 
 // Get the loading state from parent
 const loading = inject('loading', ref(false));
+
+const queryBuilderRef = ref<HTMLElement | null>(null);
+
+const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' && !loading.value) {
+        const isQueryBuilderInput = queryBuilderRef.value?.contains(document.activeElement)
+        console.log(queryBuilderRef.value, isQueryBuilderInput);
+        if (isQueryBuilderInput) {
+            handleSearch();
+        }
+    }
+};
+
+// Add and remove global event listener
+onMounted(() => {
+    document.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+    document.removeEventListener('keydown', handleKeyDown);
+});
 
 const addFilter = (group: FilterGroup) => {
     group.filters.push({
@@ -112,7 +133,7 @@ const handleSearch = () => {
 </script>
 
 <template>
-  <div class="max-w-100pc mx-auto mb-6 border rounded-md p-4 bg-white dark:bg-gray-900">
+  <div ref="queryBuilderRef" class="max-w-100pc mx-auto mb-6 border rounded-md p-4 bg-white dark:bg-gray-900">
     <h2 class="text-xl font-bold mb-4">Filter Applications</h2>
 
     <!-- Use the recursive FilterMenu component -->
@@ -126,6 +147,7 @@ const handleSearch = () => {
       @add-subgroup="addSubgroup"
       @remove-subgroup="removeSubgroup"
       @toggle-operator="toggleOperator"
+      @keydown-enter="handleSearch"
     />
 
     <!-- Sort and pagination options -->
@@ -155,17 +177,21 @@ const handleSearch = () => {
       <div class="pagination-section flex items-center gap-2 ml-10">
         <label class="text-sm font-medium">Limit:</label>
         <input
+          type="number"
           v-model="localQuery.limit"
           class="box"
           @input="emit('update:query', localQuery)"
+          @keydown="handleKeyDown"
         />
 
         <label class="text-sm font-medium ml-2">Page:</label>
         <input
+          type="number"
           v-model.number="localQuery.page"
           min="1"
           class="box max-w-15 pr-0"
           @input="emit('update:query', localQuery)"
+          @keydown="handleKeyDown"
         />
       </div>
     </div>

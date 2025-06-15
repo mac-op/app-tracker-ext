@@ -12,7 +12,7 @@ const toggleAccordion = () => isOpen.value = !isOpen.value
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="w-full" onkeydown="">
     <button
       type="button"
       @click="toggleAccordion"
